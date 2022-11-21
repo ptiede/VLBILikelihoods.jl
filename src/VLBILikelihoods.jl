@@ -25,8 +25,10 @@ function Dists.logpdf(d::AbstractVLBIDistributions, x::AbstractVector)
     return unnormed_logpdf(d, x) + lognorm(d)
 end
 
+include("utility.jl")
 include("amplitude.jl")
 include("closure_phase.jl")
+include("complexvis.jl")
 
 
 end

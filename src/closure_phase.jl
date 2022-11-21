@@ -6,15 +6,10 @@ struct NormalClosurePhaseLikelihood{V1,V2,W} <: AbstractVLBIDistributions
     lognorm::W
 end
 
-
+Base.length(d::NormalClosurePhaseLikelihood) = length(d.μ)
+Base.eltype(d::NormalClosurePhaseLikelihood) = promote_type(eltype(d.μ), eltype(d.Σ))
 Dists.insupport(d::NormalClosurePhaseLikelihood, x) = true
 
-# function NormalClosurePhaseLikelihood(μ::AbstractVector{<:Complex}, σ::AbstractVector, design::AbstractMatrix)
-#     Σ = PDmat(σ'*design*σ)
-#     μcp = design*angle.(μ)
-#     lognorm = _closurephasenorm(μcp, Σ)
-#     return NormalClosurePhaseLikelihood1(μcp, Σ, lognorm)
-# end
 
 function NormalClosurePhaseLikelihood(μ::AbstractVector, Σ::AbstractVector)
     lognorm = _closurephasenorm(μ, Σ)
@@ -48,7 +43,7 @@ end
 
 
 function unnormed_logpdf(d::NormalClosurePhaseLikelihood{V,P}, x) where {V, P<:AbstractVector}
-    _logdensity_def_μΣ(d.μ, d.Σ, x)
+    _unormed_logpdf_μΣ(d.μ, d.Σ, x)
 end
 
 
@@ -58,6 +53,11 @@ struct VonMisesClosurePhaseLikelihood{V1, V2<:AbstractVector, W} <: AbstractVLBI
     Σ::V2
     lognorm::W
 end
+
+Base.length(d::VonMisesClosurePhaseLikelihood) = length(d.μ)
+Base.eltype(d::VonMisesClosurePhaseLikelihood) = promote_type(eltype(d.μ), eltype(d.Σ))
+Dists.insupport(d::VonMisesClosurePhaseLikelihood, x) = true
+
 
 
 function VonMisesClosurePhaseLikelihood(μ::AbstractVector, Σ::AbstractVector)
@@ -105,5 +105,3 @@ function ChainRulesCore.rrule(::typeof(unnormed_logpdf), d::VonMisesClosurePhase
     end
     return s/2, _unormed_logpdf_vonmisescp
 end
-
-Dists.insupport(d::VonMisesClosurePhaseLikelihood, x) = true
