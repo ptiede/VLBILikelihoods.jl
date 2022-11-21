@@ -1,5 +1,5 @@
 function _unormed_logpdf_μΣ(μ, Σ, x)
-    s = zero(eltype(x))
+    s = zero(eltype(Σ))
     @simd for i in eachindex(μ, Σ)
         s += -abs2(x[i] - μ[i])*inv(Σ[i])
     end
@@ -7,7 +7,7 @@ function _unormed_logpdf_μΣ(μ, Σ, x)
 end
 
 function ChainRulesCore.rrule(::typeof(_unormed_logpdf_μΣ), μ, Σ, x)
-    s = zero(eltype(x))
+    s = zero(eltype(Σ))
     dx = zero(x)
     dμ = zero(μ)
     dΣ = zero(Σ)
