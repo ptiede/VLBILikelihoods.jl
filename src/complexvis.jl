@@ -33,5 +33,5 @@ function ChainRulesCore.rrule(::Type{<:ComplexVisLikelihood}, μ::AbstractVector
 end
 
 function unnormed_logpdf(d::ComplexVisLikelihood, x::AbstractVector{<:Complex})
-    return _unormed_logpdf_μΣ(d.μ, d.Σ, x)
+    return _unnormed_logpdf_μΣ(d.μ, d.Σ, x)
 end

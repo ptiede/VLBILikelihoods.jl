@@ -1,6 +1,6 @@
 module VLBILikelihoods
 
-
+using ComradeBase
 using Bessels
 using DensityInterface
 using Distributions
@@ -9,6 +9,8 @@ using PDMats
 using LinearAlgebra
 using ChainRulesCore
 using MappedArrays
+using StructArrays
+using StaticArraysCore
 
 using Distributions: log2π
 
@@ -29,6 +31,7 @@ include("utility.jl")
 include("amplitude.jl")
 include("closure_phase.jl")
 include("complexvis.jl")
+include("coherency.jl")
 
 
 end

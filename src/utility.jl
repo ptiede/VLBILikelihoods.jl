@@ -1,4 +1,4 @@
-function _unormed_logpdf_μΣ(μ, Σ, x)
+function _unnormed_logpdf_μΣ(μ, Σ, x)
     s = zero(eltype(Σ))
     @simd for i in eachindex(μ, Σ)
         s += -abs2(x[i] - μ[i])*inv(Σ[i])
@@ -6,7 +6,7 @@ function _unormed_logpdf_μΣ(μ, Σ, x)
     return s/2
 end
 
-function ChainRulesCore.rrule(::typeof(_unormed_logpdf_μΣ), μ, Σ, x)
+function ChainRulesCore.rrule(::typeof(_unnormed_logpdf_μΣ), μ, Σ, x)
     s = zero(eltype(Σ))
     dx = zero(x)
     dμ = zero(μ)
@@ -19,14 +19,14 @@ function ChainRulesCore.rrule(::typeof(_unormed_logpdf_μΣ), μ, Σ, x)
         dΣ[i] = Δx^2*Σinv^2/2
     end
 
-    function _unormed_logpdf_μΣ_pullback(Δ)
+    function _unnormed_logpdf_μΣ_pullback(Δ)
         dμ .= -Δ.*dμ
         dx .= Δ.*dx
         dΣ .= Δ.*dΣ
         return NoTangent(), dμ, dΣ, dx
     end
 
-    return s/2, _unormed_logpdf_μΣ_pullback
+    return s/2, _unnormed_logpdf_μΣ_pullback
 end
 
 

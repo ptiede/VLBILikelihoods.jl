@@ -43,7 +43,7 @@ end
 
 
 function unnormed_logpdf(d::NormalClosurePhaseLikelihood{V,P}, x) where {V, P<:AbstractVector}
-    _unormed_logpdf_μΣ(d.μ, d.Σ, x)
+    _unnormed_logpdf_μΣ(d.μ, d.Σ, x)
 end
 
 
@@ -96,12 +96,12 @@ function ChainRulesCore.rrule(::typeof(unnormed_logpdf), d::VonMisesClosurePhase
         dΣ[i] = (ci - 1)/Σinv
     end
 
-    function _unormed_logpdf_vonmisescp(Δ)
+    function _unnormed_logpdf_vonmisescp(Δ)
         dμ .= Δ.*dμ
         dx .= Δ.*dx
         dΣ .= Δ.*dΣ
 
         return NoTangent(), Tangent{typeof(d)}(μ = dμ, Σ = dΣ, lognorm=ZeroTangent()), dx
     end
-    return s/2, _unormed_logpdf_vonmisescp
+    return s/2, _unnormed_logpdf_vonmisescp
 end

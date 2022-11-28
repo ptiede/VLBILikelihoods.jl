@@ -32,5 +32,5 @@ end
 
 
 function unnormed_logpdf(d::AmplitudeLikelihood, x::AbstractArray)
-    return _unormed_logpdf_μΣ(d.μ, d.Σ, x)
+    return _unnormed_logpdf_μΣ(d.μ, d.Σ, x)
 end
