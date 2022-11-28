@@ -1,32 +1,41 @@
+myzero(x) = zero(x)
+myzero(::Type{<:SMatrix{2,2,T}}) where {T} = zero(MMatrix{2,2,T,4})
+myzero(s::AbstractVector{<:SMatrix{2,2,T}}) where {T} = zeros(MMatrix{2,2,T,4}, length(s))
+
 function _unnormed_logpdf_μΣ(μ, Σ, x)
-    s = zero(eltype(Σ))
+    s = myzero(eltype(Σ))
     @simd for i in eachindex(μ, Σ)
-        s += -abs2(x[i] - μ[i])*inv(Σ[i])
+        @. s += -abs2(x[i] - μ[i])*inv(Σ[i])
     end
     return s/2
 end
 
 function ChainRulesCore.rrule(::typeof(_unnormed_logpdf_μΣ), μ, Σ, x)
-    s = zero(eltype(Σ))
-    dx = zero(x)
-    dμ = zero(μ)
-    dΣ = zero(Σ)
+    s = myzero(eltype(Σ))
+    dx = myzero(x)
+    dμ = myzero(μ)
+    dΣ = myzero(Σ)
+    s = _unnormed_logpdf_μΣ(μ, Σ, x)
     @simd for i in eachindex(μ, Σ)
-        Δx = abs(x[i] - μ[i])
-        Σinv = inv(Σ)
-        s += -Δx^2*Σinv
-        dμ[i] = dx[i] = -Δx*Σinv
-        dΣ[i] = Δx^2*Σinv^2/2
+        Δx = abs.(x[i] - μ[i])
+        Σinv = inv.(Σ[i])
+        s .+= -Δx.^2 .* Σinv
+        dμ[i] .= dx[i] .= -Δx.*Σinv
+        dΣ[i] .= Δx.^2 .* Σinv.^2 ./2
     end
-
     function _unnormed_logpdf_μΣ_pullback(Δ)
-        dμ .= -Δ.*dμ
-        dx .= Δ.*dx
-        dΣ .= Δ.*dΣ
+        for i in eachindex(dμ, dx, dΣ)
+            dμ[i] .*= -Δ
+            dx[i] .*= Δ
+            dΣ[i] .*= Δ
+        end
+        Σinv = map(x->inv.(x), Σ)
+        Δx = abs.(x .- μ)
+        dμ = Δ.*Δx.*Σinv
         return NoTangent(), dμ, dΣ, dx
     end
 
-    return s/2, _unnormed_logpdf_μΣ_pullback
+    return s./2, _unnormed_logpdf_μΣ_pullback
 end
 
 
