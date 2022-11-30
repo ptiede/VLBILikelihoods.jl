@@ -22,6 +22,14 @@ function _coherencynorm(μ, Σ)
     return logw
 end
 
+function _coherencynorm(μ::StructVector, Σ::StructVector)
+    @assert length(μ) == length(Σ) "Mean and std. dev. vector are not the same length"
+    μs = StructArrays.components(μ)
+    Σs = StructArrays.components(Σ)
+    sum(_cvisnorm.(μs, Σs))
+end
+
+
 function ChainRulesCore.rrule(::typeof(_coherencynorm), μ, Σ)
     s = _coherencynorm(μ, Σ)
     function _coherencynorm_pullback(Δ)
@@ -31,9 +39,19 @@ function ChainRulesCore.rrule(::typeof(_coherencynorm), μ, Σ)
     return s, _coherencynorm_pullback
 end
 
-function unnormed_logpdf(d::CoherencyLikelihood, x::AbstractVector{<:StaticArraysCore.SMatrix{2,2}})
+function unnormed_logpdf(d::CoherencyLikelihood, x::AbstractVector{<:SA.StaticMatrix{2,2}})
+    println("No here")
     s = _unnormed_logpdf_μΣ(d.μ, d.Σ, x)
     return s[1] + s[2] + s[3] + s[4]
+end
+
+function unnormed_logpdf(d::CoherencyLikelihood{<:StructVector{<:SA.StaticMatrix{2,2}}, <:StructVector{<:SA.StaticMatrix{2,2}}},
+                         x::StructVector{<:SA.StaticMatrix{2,2}})
+    μs = StructArrays.components(d.μ)
+    Σs = StructArrays.components(d.Σ)
+    xs = StructArrays.components(x)
+    s = sum(_unnormed_logpdf_μΣ.(μs, Σs, xs))
+    return s
 end
 
 # function ChainRulesCore.rrule(::typeof(unnormed_logpdf), d::CoherencyLikelihood, x::AbstractVector{<:StaticArraysCore.SMatrix{2,2}})

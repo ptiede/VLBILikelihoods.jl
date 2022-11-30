@@ -11,6 +11,7 @@ using ChainRulesCore
 using MappedArrays
 using StructArrays
 using StaticArraysCore
+const SA = StaticArraysCore
 
 using Distributions: log2π
 
