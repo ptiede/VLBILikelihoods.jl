@@ -1,34 +1,52 @@
-export NormalClosurePhaseLikelihood, VonMisesClosurePhaseLikelihood
+export ClosurePhaseLikelihood
 
-struct NormalClosurePhaseLikelihood{V1,V2,W} <: AbstractVLBIDistributions
+struct ClosurePhaseLikelihood{V1,V2,W} <: AbstractVLBIDistributions
     μ::V1
     Σ::V2
     lognorm::W
 end
 
-Base.length(d::NormalClosurePhaseLikelihood) = length(d.μ)
-Base.eltype(d::NormalClosurePhaseLikelihood) = promote_type(eltype(d.μ), eltype(d.Σ))
-Dists.insupport(d::NormalClosurePhaseLikelihood, x) = true
+Base.length(d::ClosurePhaseLikelihood) = length(d.μ)
+Base.eltype(d::ClosurePhaseLikelihood) = promote_type(eltype(d.μ), eltype(d.Σ))
+Dists.insupport(d::ClosurePhaseLikelihood, x) = true
 
 
-function NormalClosurePhaseLikelihood(μ::AbstractVector, Σ::AbstractVector)
+function ClosurePhaseLikelihood(μ::AbstractVector, Σ::AbstractVector)
     lognorm = _closurephasenorm(μ, Σ)
-    return NormalClosurePhaseLikelihood(μ, Σ, lognorm)
+    return ClosurePhaseLikelihood(μ, Σ, lognorm)
 end
 
-function NormalClosurePhaseLikelihood(μ::AbstractVector, Σ::Diagonal)
-    return NormalClosurePhaseLikelihood(μ, diag(Σ))
+function ClosurePhaseLikelihood(μ::AbstractVector, Σ::Diagonal)
+    return ClosurePhaseLikelihood(μ, diag(Σ))
 end
 
-function NormalClosurePhaseLikelihood(μ::AbstractVector, Σ::AbstractMatrix)
+function ClosurePhaseLikelihood(μ::AbstractVector, Σ::AbstractMatrix)
     Σpd = PDMat(Σ)
     lognorm = _closurephasenorm(μ, Σpd)
-    return NormalClosurePhaseLikelihood(μ, Σpd, lognorm)
+    return ClosurePhaseLikelihood(μ, Σpd, lognorm)
 end
 
 function _closurephasenorm(μ, Σ::AbstractVector)
-    lw =  sum(log, Σ)
-    return (-lw - length(μ)*log2π)/2
+    @assert length(μ) == length(Σ) "Mean and std. dev. vector are not the same length"
+    n = length(μ)
+    return -n*log2π - sum(x->log(besseli0x(inv(x))), Σ)
+end
+
+function ChainRulesCore.rrule(::typeof(_closurephasenorm), μ, Σ::AbstractVector)
+    v =zero(eltype(Σ))
+    dΣ = zero(Σ)
+    for i in eachindex(Σ)
+        κ = inv(Σ[i])
+        i0 = besseli0x(κ)
+        i1 = besseli1x(κ)
+        v += log(i0)
+        dΣ[i] = Σ[i] + i1/i0
+    end
+    function _closurephasenorm_pullback(Δ)
+        dΣ .= -Δ.*dΣ
+        return NoTangent(), ZeroTangent(), dΣ
+    end
+    return v, _closurephasenorm_pullback
 end
 
 function _closurephasenorm(μ, Σ::PDMat)
@@ -36,44 +54,17 @@ function _closurephasenorm(μ, Σ::PDMat)
     return (-lw - length(μ)*log2π)/2
 end
 
-function unnormed_logpdf(d::NormalClosurePhaseLikelihood{V,P}, x) where {V, P<:PDMat}
-    z = invquad(d.Σ, x .- d.μ)
+# We mark the norms as non-differentiable. Why? Because they are wrong anyways!
+ChainRulesCore.@non_differentiable _closurephasenorm(μ, Σ::PDMat)
+
+function unnormed_logpdf(d::ClosurePhaseLikelihood{V,P}, x) where {V, P<:PDMat}
+    dθ = cis.(x) .- cis.(d.μ)
+    z = invquad(d.Σ, dθ)
     return -z/2
 end
 
 
-function unnormed_logpdf(d::NormalClosurePhaseLikelihood{V,P}, x) where {V, P<:AbstractVector}
-    _unnormed_logpdf_μΣ(d.μ, d.Σ, x)
-end
-
-
-
-struct VonMisesClosurePhaseLikelihood{V1, V2<:AbstractVector, W} <: AbstractVLBIDistributions
-    μ::V1
-    Σ::V2
-    lognorm::W
-end
-
-Base.length(d::VonMisesClosurePhaseLikelihood) = length(d.μ)
-Base.eltype(d::VonMisesClosurePhaseLikelihood) = promote_type(eltype(d.μ), eltype(d.Σ))
-Dists.insupport(d::VonMisesClosurePhaseLikelihood, x) = true
-
-
-
-function VonMisesClosurePhaseLikelihood(μ::AbstractVector, Σ::AbstractVector)
-    lognorm = _vonmisesclosurephasenorm(μ, Σ)
-    return VonMisesClosurePhaseLikelihood(μ, Σ, lognorm)
-end
-
-
-
-function _vonmisesclosurephasenorm(μ, Σ)
-    @assert length(μ) == length(Σ) "Mean and std. dev. vector are not the same length"
-    n = length(μ)
-    return -n*log2π - sum(x->log(besseli0x(inv(x))), Σ)
-end
-
-function unnormed_logpdf(d::VonMisesClosurePhaseLikelihood, x)
+function unnormed_logpdf(d::ClosurePhaseLikelihood{V,P}, x) where {V, P<:AbstractVector}
     s = zero(eltype(x))
     @simd for i in eachindex(d.μ, d.Σ)
         s += (cos(x[i] - d.μ[i]) - 1)*inv(d.Σ[i])
@@ -81,7 +72,8 @@ function unnormed_logpdf(d::VonMisesClosurePhaseLikelihood, x)
     return s
 end
 
-function ChainRulesCore.rrule(::typeof(unnormed_logpdf), d::VonMisesClosurePhaseLikelihood, x)
+
+function ChainRulesCore.rrule(::typeof(unnormed_logpdf), d::ClosurePhaseLikelihood{V,<:AbstractVector}, x) where {V}
     s = zero(eltype(x))
     dx = zero(x)
     dμ = zero(d.μ)

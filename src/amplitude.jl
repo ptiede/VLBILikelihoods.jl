@@ -10,7 +10,23 @@ Base.length(d::AmplitudeLikelihood) = length(d.μ)
 Base.eltype(d::AmplitudeLikelihood) = promote_type(eltype(d.μ), eltype(d.Σ))
 Dists.insupport(::AmplitudeLikelihood, x) = true
 
+"""
+    AmplitudeLikelihood(μ, Σ::Union{AbstractVector, Diagonal})
 
+Forms the likelihood for visibility amplitudes from the mean vector `μ` and
+the *diagonal* covariance matrix `Σ`. Σ can either be a vector or a diagonal
+matrix.
+
+# Notes
+
+We do no processing to the data, i.e. the mean μ is not-debiased anywhere.
+
+# Warning
+
+This likelihood will be significantly biased from the true Rice distribution
+for data points with SNR = μ/Σ < 2. If this matter significantly for you, we recommend
+that you consider fitting pure complex visibilities instead.
+"""
 function AmplitudeLikelihood(μ::AbstractVector, Σ::AbstractVector)
     lognorm = _gaussnorm(μ, Σ)
     return AmplitudeLikelihood(μ, Σ, lognorm)
@@ -23,8 +39,9 @@ end
 function ChainRulesCore.rrule(::Type{<:AmplitudeLikelihood}, μ::AbstractVector, Σ::AbstractVector)
     lognorm = AmplitudeLikelihood(μ, Σ, _gaussnorm(μ, Σ))
     function _AmplitudeLikelihood_pullback(Δ)
-        Δμ = Δ.μ
-        ΔΣ = Δ.Σ .- Δ.lognorm.*inv.(Σ)/2
+        d = unthunk(Δ)
+        Δμ = @thunk(d.μ)
+        ΔΣ = @thunk(d.Σ .- d.lognorm.*inv.(Σ)/2)
         return NoTangent(), Δμ, ΔΣ
     end
     return lognorm, _AmplitudeLikelihood_pullback
@@ -33,4 +50,10 @@ end
 
 function unnormed_logpdf(d::AmplitudeLikelihood, x::AbstractArray)
     return _unnormed_logpdf_μΣ(d.μ, d.Σ, x)
+end
+
+function Distributions._rand!(rng::Random.AbstractRNG, d::AmplitudeLikelihood, x::AbstractVector)
+    randn!(rng, x)
+    x .= x.*sqrt.(d.Σ) .+ d.μ
+    return x
 end
