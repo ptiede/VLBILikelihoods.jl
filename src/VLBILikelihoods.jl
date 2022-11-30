@@ -8,7 +8,7 @@ const Dists = Distributions
 using PDMats
 using LinearAlgebra
 using ChainRulesCore
-using MappedArrays
+using Random
 using StructArrays
 using StaticArraysCore
 const SA = StaticArraysCore
