@@ -39,12 +39,6 @@ function ChainRulesCore.rrule(::typeof(_coherencynorm), μ, Σ)
     return s, _coherencynorm_pullback
 end
 
-function unnormed_logpdf(d::CoherencyLikelihood, x::AbstractVector{<:SA.StaticMatrix{2,2}})
-    println("No here")
-    s = _unnormed_logpdf_μΣ(d.μ, d.Σ, x)
-    return s[1] + s[2] + s[3] + s[4]
-end
-
 function unnormed_logpdf(d::CoherencyLikelihood{<:StructVector{<:SA.StaticMatrix{2,2}}, <:StructVector{<:SA.StaticMatrix{2,2}}},
                          x::StructVector{<:SA.StaticMatrix{2,2}})
     μs = StructArrays.components(d.μ)

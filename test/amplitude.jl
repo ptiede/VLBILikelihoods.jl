@@ -13,4 +13,6 @@
     @test logpdf(dv2, x) ≈ logpdf(dd, x)
 
     test_rrule(AmplitudeLikelihood, μ, Σ)
+
+    @inferred
 end

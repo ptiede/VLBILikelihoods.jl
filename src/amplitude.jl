@@ -13,9 +13,10 @@ Dists.insupport(::AmplitudeLikelihood, x) = true
 """
     AmplitudeLikelihood(μ, Σ::Union{AbstractVector, Diagonal})
 
-Forms the likelihood for visibility amplitudes from the mean vector `μ` and
-the *diagonal* covariance matrix `Σ`. Σ can either be a vector or a diagonal
-matrix.
+Forms the likelihood for amplitudes from the mean vector `μ` and
+the covariance matrix `Σ`. If Σ is vector or a diagonal
+matrix then we assume that the argument is the diagonal covariance matrix.
+If Σ is a full matrix then we assume that a dense covariance was passed
 
 # Notes
 
@@ -34,6 +35,12 @@ end
 
 function AmplitudeLikelihood(μ::AbstractVector, Σ::Diagonal)
     AmplitudeLikelihood(μ, diag(Σ))
+end
+
+function AmplitudeLikelihood(μ::AbstractVector, Σ::AbstractMatrix)
+    Σpd = PDMat(Σ)
+    lognorm = _gaussnorm(μ, Σpd)
+    return AmplitudeLikelihood(μ, Σpd, lognorm)
 end
 
 function ChainRulesCore.rrule(::Type{<:AmplitudeLikelihood}, μ::AbstractVector, Σ::AbstractVector)
