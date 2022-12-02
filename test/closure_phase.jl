@@ -1,6 +1,6 @@
 @testset "Closure Phase" begin
     μ = rand(50)
-    m = rand(50,50)
+    σ = rand(50,50)
     Σ = 0.5.*(m .+ m') .+ 5 .* Diagonal(ones(50))
     Σd = diag(Σ)
 
