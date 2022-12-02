@@ -23,6 +23,7 @@ abstract type AbstractVLBIDistributions <:  Dists.ContinuousMultivariateDistribu
 
 lognorm(d::AbstractVLBIDistributions)  = d.lognorm
 
+
 function Dists.logpdf(d::AbstractVLBIDistributions, x::AbstractVector)
     @assert Dists.insupport(d, x)
     return unnormed_logpdf(d, x) + lognorm(d)

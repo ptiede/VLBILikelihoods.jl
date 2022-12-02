@@ -38,11 +38,13 @@ end
 function ChainRulesCore.rrule(::typeof(_gaussnorm), μ, Σ::PDMat)
     y = _gaussnorm(μ,  Σ)
     function _gaussnorm_pullback(Δ)
-        ∂Σ = (unthunk(Δ) / (-2)) * inv(Σ).mat
+        invΣ = inv(Σ)
+        ∂Σ = (unthunk(Δ) / (-2)) * invΣ.mat
         return NoTangent(), NoTangent(), ∂Σ
     end
     return y, _gaussnorm_pullback
 end
+
 
 
 _chi2(dx, Σ) = invquad(Σ, dx)/2

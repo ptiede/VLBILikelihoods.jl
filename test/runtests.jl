@@ -3,7 +3,7 @@ using Test
 using ChainRulesTestUtils
 using ChainRulesCore
 using Distributions
-using StaticArrays
+using StaticArraysCore
 using Zygote
 using LinearAlgebra
 using FiniteDifferences
@@ -32,6 +32,7 @@ using FiniteDifferences
         # Now for complex numbers
         μc = rand(ComplexF64, 50)
         xc = rand(ComplexF64, 50)
+        Σ = rand(50)
         test_rrule(VLBILikelihoods._unnormed_logpdf_μΣ, μc, Σ, xc)
         @inferred Zygote.gradient(VLBILikelihoods._unnormed_logpdf_μΣ, μc, Σ, xc)
 

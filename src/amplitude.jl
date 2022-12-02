@@ -37,16 +37,31 @@ function AmplitudeLikelihood(μ::AbstractVector, Σ::Diagonal)
     AmplitudeLikelihood(μ, diag(Σ))
 end
 
+
 function AmplitudeLikelihood(μ::AbstractVector, Σ::AbstractMatrix)
     Σpd = PDMat(Σ)
-    lognorm = _gaussnorm(μ, Σpd)
-    return AmplitudeLikelihood(μ, Σpd, lognorm)
+    return AmplitudeLikelihood(μ, Σpd)
+end
+
+function ChainRulesCore.rrule(config::RuleConfig{>:HasReverseMode}, T::Type{<:Union{AmplitudeLikelihood, ClosurePhaseLikelihood}}, μ::AbstractVector, Σ::AbstractMatrix)
+    Σpd = PDMat(Σ)
+    d = T(μ, Σpd)
+
+    # get the normalization from the rrule
+    function _AmplitudeNormal_pullback(Δ)
+        Δlg = last(rrule_via_ad(config, _gaussnorm, μ, Σpd)[2](Δ.lognorm))
+        Δμ = Δ.μ
+        ΔΣ = Δ.Σ + Δlg
+        return NoTangent(), Δμ, ΔΣ
+    end
+    return d, _AmplitudeNormal_pullback
 end
 
 function AmplitudeLikelihood(μ::AbstractVector, Σ::PDMat)
     lognorm = _gaussnorm(μ, Σ)
     return AmplitudeLikelihood(μ, Σ, lognorm)
 end
+
 
 function ChainRulesCore.rrule(::Type{<:AmplitudeLikelihood}, μ::AbstractVector, Σ::AbstractVector)
     lognorm = AmplitudeLikelihood(μ, Σ, _gaussnorm(μ, Σ))

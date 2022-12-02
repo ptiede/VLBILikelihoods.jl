@@ -23,18 +23,14 @@
     @inferred Zygote.gradient(logdensityof(dv), x)
     @inferred Zygote.gradient(logdensityof(dv2), x)
 
-    f1(x, μ) = logdensityof(AmplitudeLikelihood(μ, Σd), x)
-    f2(x, μ) = logdensityof(AmplitudeLikelihood(μ, Σ), x)
+    f(x, μ, Σ) = logdensityof(AmplitudeLikelihood(μ, Σ), x)
 
 
-    gvz  = Zygote.gradient(f1, x, μ)
-    gvz2 = Zygote.gradient(f2, x, μ)
+    gvz  = Zygote.gradient(f, x, μ, Σd)
+    gvz2 = Zygote.gradient(f, x, μ, Diagonal(Σ))
+    @inferred Zygote.gradient(f, x, μ, Σ)
 
-
-    gfdz  = grad(m, f1, x, μ)
-    gfdz2  = grad(m, f2, x, μ)
-
+    gfdz  = grad(m, f, x, μ, Σd)
     @test all(isapprox.(gvz, gfdz))
-    @test all(isapprox.(gvz2, gfdz2))
 
 end
