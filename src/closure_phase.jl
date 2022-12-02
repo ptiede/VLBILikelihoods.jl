@@ -1,6 +1,6 @@
 export ClosurePhaseLikelihood
 
-struct ClosurePhaseLikelihood{V1,V2,W} <: AbstractVLBIDistributions
+struct ClosurePhaseLikelihood{V1,V2<:Union{AbstractVector, AbstractPDMat},W} <: AbstractVLBIDistributions
     μ::V1
     Σ::V2
     lognorm::W
@@ -24,6 +24,11 @@ function ClosurePhaseLikelihood(μ::AbstractVector, Σ::AbstractMatrix)
     Σpd = PDMat(Σ)
     lognorm = _closurephasenorm(μ, Σpd)
     return ClosurePhaseLikelihood(μ, Σpd, lognorm)
+end
+
+function ClosurePhaseLikelihood(μ::AbstractVector, Σ::PDMat)
+    lognorm = _closurephasenorm(μ, Σ)
+    return ClosurePhaseLikelihood(μ, Σ, lognorm)
 end
 
 function _closurephasenorm(μ, Σ::AbstractVector)
@@ -65,7 +70,7 @@ end
 function _cp_logpdf_full(μ, Σ, x)
     dθ = cis.(x) .- cis.(μ)
     z = _chi2(dθ, Σ)
-    return -z/2
+    return -z
 end
 
 

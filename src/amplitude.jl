@@ -1,6 +1,6 @@
 export AmplitudeLikelihood
 
-struct AmplitudeLikelihood{V1,V2,W} <: AbstractVLBIDistributions
+struct AmplitudeLikelihood{V1,V2<:Union{AbstractVector, AbstractPDMat},W} <: AbstractVLBIDistributions
     μ::V1
     Σ::V2
     lognorm::W
@@ -43,6 +43,11 @@ function AmplitudeLikelihood(μ::AbstractVector, Σ::AbstractMatrix)
     return AmplitudeLikelihood(μ, Σpd, lognorm)
 end
 
+function AmplitudeLikelihood(μ::AbstractVector, Σ::PDMat)
+    lognorm = _gaussnorm(μ, Σ)
+    return AmplitudeLikelihood(μ, Σ, lognorm)
+end
+
 function ChainRulesCore.rrule(::Type{<:AmplitudeLikelihood}, μ::AbstractVector, Σ::AbstractVector)
     lognorm = AmplitudeLikelihood(μ, Σ, _gaussnorm(μ, Σ))
     function _AmplitudeLikelihood_pullback(Δ)
@@ -55,12 +60,29 @@ function ChainRulesCore.rrule(::Type{<:AmplitudeLikelihood}, μ::AbstractVector,
 end
 
 
-function unnormed_logpdf(d::AmplitudeLikelihood, x::AbstractArray)
+function unnormed_logpdf(d::AmplitudeLikelihood, x::AbstractVector)
     return _unnormed_logpdf_μΣ(d.μ, d.Σ, x)
 end
 
-function Distributions._rand!(rng::Random.AbstractRNG, d::AmplitudeLikelihood, x::AbstractVector)
+function unnormed_logpdf(d::AmplitudeLikelihood{V,P}, x::AbstractVector) where {V, P<:PDMat}
+    return _amp_logpdf_full(d.μ, d.Σ, x)
+end
+
+function _amp_logpdf_full(μ, Σ, x)
+    dθ = x .- μ
+    z = _chi2(dθ, Σ)
+    return -z
+end
+
+function Distributions._rand!(rng::Random.AbstractRNG, d::AmplitudeLikelihood{<:AbstractVector, <:AbstractVector}, x::AbstractVector)
     randn!(rng, x)
     x .= x.*sqrt.(d.Σ) .+ d.μ
+    return x
+end
+
+function Distributions._rand!(rng::Random.AbstractRNG, d::AmplitudeLikelihood{<:AbstractVector, <:PDMat}, x::AbstractVector)
+    randn!(rng, x)
+    PDMats.unwhiten!(d.Σ, x)
+    x .+= d.μ
     return x
 end
