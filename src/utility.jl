@@ -6,20 +6,6 @@ function _unnormed_logpdf_μΣ(μ, Σ, x)
     return s/2
 end
 
-function ChainRulesCore.rrule(::typeof(_unnormed_logpdf_μΣ), μ, Σ, x)
-    s = _unnormed_logpdf_μΣ(μ, Σ, x)
-
-    function _unormed_logpdf_μΣ_pullback(Δ)
-        Δx = x .- μ
-        invΣ = inv.(Σ)
-        dμ = @thunk(Δ.*Δx.*invΣ)
-        dx = @thunk(-Δ.*Δx.*invΣ)
-        dΣ = @thunk(Δ.*abs2.(Δx).*invΣ.^2/2)
-        return NoTangent(), dμ, dΣ, dx
-    end
-
-    return s, _unormed_logpdf_μΣ_pullback
-end
 
 function _gaussnorm(μ, Σ::AbstractVector)
     @assert length(μ) == length(Σ) "Mean and std. dev. vector are not the same length"
@@ -48,19 +34,3 @@ end
 
 
 _chi2(dx, Σ) = invquad(Σ, dx)/2
-
-# Temp until https://github.com/JuliaStats/Distributions.jl/pull/1554 is merged
-function ChainRulesCore.rrule(::typeof(_chi2), dx::AbstractVector, Σ)
-    y = _chi2(dx, Σ)
-    z = Σ \ dx
-    function _chi2_pullback(Δ)
-        ∂ = ChainRulesCore.unthunk(Δ)
-        ∂x = ∂ * z
-        ∂Σ = ChainRulesCore.@thunk(begin
-            ∂J = ∂ * dx * dx'./2
-            - ((Σ \ ∂J) / Σ)./2
-        end)
-        return (ChainRulesCore.NoTangent(), ∂x, ∂Σ)
-    end
-    return y, _chi2_pullback
-end

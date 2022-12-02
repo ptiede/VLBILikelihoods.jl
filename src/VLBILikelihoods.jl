@@ -34,6 +34,7 @@ include("amplitude.jl")
 include("closure_phase.jl")
 include("complexvis.jl")
 include("coherency.jl")
+include("rules.jl")
 
 
 end

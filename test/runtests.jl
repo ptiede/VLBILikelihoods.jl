@@ -3,7 +3,7 @@ using Test
 using ChainRulesTestUtils
 using ChainRulesCore
 using Distributions
-using StaticArraysCore
+using StaticArrays
 using Zygote
 using LinearAlgebra
 using FiniteDifferences

@@ -22,16 +22,17 @@ function _cvisnorm(μ, Σ)
     return 2*_gaussnorm(μ, Σ)
 end
 
-function ChainRulesCore.rrule(::Type{<:ComplexVisLikelihood}, μ::AbstractVector, Σ::AbstractVector)
-    lognorm = AmplitudeLikelihood(μ, Σ, _complexvisnorm(μ, Σ))
-    function _ComplexVisLikelihood_pullback(Δ)
-        Δμ = Δ.μ
-        ΔΣ = Δ.Σ .- Δ.lognorm.*inv.(Σ)
-        return NoTangent(), Δμ, ΔΣ
-    end
-    return lognorm, _ComplexVisLikelihood_pullback
-end
 
 function unnormed_logpdf(d::ComplexVisLikelihood, x::AbstractVector{<:Complex})
     return _unnormed_logpdf_μΣ(d.μ, d.Σ, x)
 end
+
+function Dists._rand!(rng::Random.AbstractRNG, d::ComplexVisLikelihood, x::AbstractArray{<:Complex})
+    randn!(rng, x).*sqrt.(d.Σ)
+    x .+= d.μ
+    return x
+end
+
+# function Dists.rand!(rng::Random.AbstractRNG, d::ComplexVisLikelihood, x::AbstractVector, dims::Dims)
+#     x .= randn(rng, eltype(d)).*sqrt.(d.Σ) .+ d.μ
+# end

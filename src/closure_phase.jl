@@ -36,23 +36,6 @@ function _closurephasenorm(μ, Σ::AbstractVector)
     return -n*log2π - sum(x->log(besseli0x(inv(x))), Σ)
 end
 
-function ChainRulesCore.rrule(::typeof(_closurephasenorm), μ, Σ::AbstractVector)
-    v =zero(eltype(Σ))
-    n = length(Σ)
-    dΣ = zero(Σ)
-    for i in eachindex(Σ)
-        κ = inv(Σ[i])
-        i0 = besseli0x(κ)
-        i1 = besseli1x(κ)
-        v += log(i0)
-        dΣ[i] = (i1/i0-1)*κ^2
-    end
-    function _closurephasenorm_pullback(Δ)
-       ΔΣ = Δ.*dΣ
-        return NoTangent(), ZeroTangent(), ΔΣ
-    end
-    return -n*log2π - v, _closurephasenorm_pullback
-end
 
 # # We mark the norms as non-differentiable. Why? Because they are wrong anyways!
 # ChainRulesCore.@non_differentiable _closurephasenorm(μ, Σ::PDMat)
@@ -94,27 +77,3 @@ function _cp_logpdf(μ, Σ, x)
     end
     return s
 end
-
-
-function ChainRulesCore.rrule(::typeof(_cp_logpdf), μ, Σ, x)
-    s = _cp_logpdf(μ, Σ, x)
-
-    function _cp_logpdf_pullback(Δ)
-        Σinv = inv.(Σ)
-        ss = sin.(x .- μ)
-        dμ = @thunk(Δ.*ss.*Σinv)
-        dx = @thunk(-Δ.*ss.*Σinv)
-        dΣ = @thunk(-Δ.*(cos.(x .- μ) .- 1).*Σinv.^2)
-        return NoTangent(), dμ, dΣ, dx
-    end
-    return s, _cp_logpdf_pullback
-end
-
-    # @simd for i in eachindex(μ, Σ)
-    #     Σinv = inv(Σ[i])
-    #     si,ci = sincos(x[i] - μ[i])
-    #     s += (ci-1)*Σinv
-    #     dμ[i] = si*Σinv
-    #     dx[i] = -si*Σinv
-    #     dΣ[i] = -(ci - 1)*Σinv^2
-    # end

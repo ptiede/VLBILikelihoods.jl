@@ -30,14 +30,6 @@ function _coherencynorm(μ::StructVector, Σ::StructVector)
 end
 
 
-function ChainRulesCore.rrule(::typeof(_coherencynorm), μ, Σ)
-    s = _coherencynorm(μ, Σ)
-    function _coherencynorm_pullback(Δ)
-        dΣ = -Δ.*map(x->inv.(x), Σ)
-        return NoTangent(), ZeroTangent(), dΣ
-    end
-    return s, _coherencynorm_pullback
-end
 
 function unnormed_logpdf(d::CoherencyLikelihood{<:StructVector{<:SA.StaticMatrix{2,2}}, <:StructVector{<:SA.StaticMatrix{2,2}}},
                          x::StructVector{<:SA.StaticMatrix{2,2}})
