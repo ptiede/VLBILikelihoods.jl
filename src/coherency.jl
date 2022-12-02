@@ -40,6 +40,7 @@ function unnormed_logpdf(d::CoherencyLikelihood{<:StructVector{<:SA.StaticMatrix
     return s
 end
 
+
 # function ChainRulesCore.rrule(::typeof(unnormed_logpdf), d::CoherencyLikelihood, x::AbstractVector{<:StaticArraysCore.SMatrix{2,2}})
 #     s, ds = ChainRulesCore.rrule(_unnormed_logpdf_μΣ, d.μ, d.Σ, x)
 #     function _unnormed_logpdf_coherency_pullback(Δ)

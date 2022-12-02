@@ -1,4 +1,8 @@
 @testset "Closure Phase" begin
+
+    m = central_fdm(5,1)
+
+
     μ = rand(50)
     σ = rand(50,50)
     Σ = 0.5.*(σ .+ σ') .+ 5 .* Diagonal(ones(50))

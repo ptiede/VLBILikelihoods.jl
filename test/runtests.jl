@@ -7,6 +7,7 @@ using StaticArrays
 using Zygote
 using LinearAlgebra
 using FiniteDifferences
+using StructArrays
 
 @testset "VLBILikelihoods.jl" begin
 
@@ -29,18 +30,22 @@ using FiniteDifferences
             @inferred VLBILikelihoods._chi2(μ, Σ)
         end
 
-        # Now for complex numbers
-        μc = rand(ComplexF64, 50)
-        xc = rand(ComplexF64, 50)
-        Σ = rand(50)
-        test_rrule(VLBILikelihoods._unnormed_logpdf_μΣ, μc, Σ, xc)
-        @inferred Zygote.gradient(VLBILikelihoods._unnormed_logpdf_μΣ, μc, Σ, xc)
+        @testset "diagonal complex normal stuff" begin
+            # Now for complex numbers
+            μc = rand(ComplexF64, 50)
+            xc = rand(ComplexF64, 50)
+            Σ = rand(50)
+            test_rrule(VLBILikelihoods._unnormed_logpdf_μΣ, μc, Σ, xc)
+            @inferred Zygote.gradient(VLBILikelihoods._unnormed_logpdf_μΣ, μc, Σ, xc)
+        end
 
 
 
     end
 
     include(joinpath(@__DIR__, "amplitude.jl"))
+    include(joinpath(@__DIR__, "closure_phase.jl"))
+    include(joinpath(@__DIR__, "complex_vis.jl"))
     include(joinpath(@__DIR__, "coherency.jl"))
 
 

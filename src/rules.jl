@@ -99,12 +99,48 @@ function ChainRulesCore.rrule(::Type{<:ComplexVisLikelihood}, μ::AbstractVector
     return lognorm, _ComplexVisLikelihood_pullback
 end
 
+function ChainRulesCore.rrule(
+    config::RuleConfig{>:HasReverseMode},
+    ::typeof(unnormed_logpdf),
+    d::CoherencyLikelihood{<:StructVector{<:SA.StaticMatrix{2,2,T}}, <:StructVector{<:SA.StaticMatrix{2,2,S}}},
+    x::StructVector{<:SA.StaticMatrix{2,2,X}}
+    ) where {T, S, X}
+    μs = StructArrays.components(d.μ)
+    Σs = StructArrays.components(d.Σ)
+    xs = StructArrays.components(x)
 
-function ChainRulesCore.rrule(::typeof(_coherencynorm), μ, Σ)
+    l1, dl1 = rrule_via_ad(config, _unnormed_logpdf_μΣ, μs[1], Σs[1], xs[1])
+    l2, dl2 = rrule_via_ad(config, _unnormed_logpdf_μΣ, μs[2], Σs[2], xs[2])
+    l3, dl3 = rrule_via_ad(config, _unnormed_logpdf_μΣ, μs[3], Σs[3], xs[3])
+    l4, dl4 = rrule_via_ad(config, _unnormed_logpdf_μΣ, μs[4], Σs[4], xs[4])
+
+    ll = l1 + l2 + l3 + l4
+
+    function _unnormed_lpdf_coherency(Δ)
+        Δl1 = dl1(Δ)
+        Δl2 = dl2(Δ)
+        Δl3 = dl3(Δ)
+        Δl4 = dl4(Δ)
+        dμ = StructVector{SMatrix{2,2,T,4}}((unthunk(Δl1[2]), unthunk(Δl2[2]), unthunk(Δl3[2]), unthunk(Δl4[2])))
+        dΣ = StructVector{SMatrix{2,2,S,4}}((unthunk(Δl1[3]), unthunk(Δl2[3]), unthunk(Δl3[3]), unthunk(Δl4[3])))
+        dx = StructVector{SMatrix{2,2,X,4}}((unthunk(Δl1[4]), unthunk(Δl2[4]), unthunk(Δl3[4]), unthunk(Δl4[4])))
+        return NoTangent(), Tangent{typeof(d)}(μ=dμ, Σ=dΣ, lognorm=ZeroTangent()), dx
+    end
+
+    return ll, _unnormed_lpdf_coherency
+end
+
+function _comp_coherency_pullback(Δ, Σxx)
+    return - Δ.*inv.(Σxx)
+end
+
+function ChainRulesCore.rrule(::typeof(_coherencynorm), μ, Σ::StructVector)
     s = _coherencynorm(μ, Σ)
     function _coherencynorm_pullback(Δ)
-        dΣ = -Δ.*map(x->inv.(x), Σ)
-        return NoTangent(), ZeroTangent(), dΣ
+        Σc = StructArrays.components(Σ)
+        ΔΣ = _comp_coherency_pullback.(Ref(Δ), Σc)
+
+        return NoTangent(), ZeroTangent(), StructVector{eltype(Σ)}(ΔΣ)
     end
     return s, _coherencynorm_pullback
 end
