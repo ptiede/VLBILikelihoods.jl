@@ -1,12 +1,14 @@
-function ChainRulesCore.rrule(::typeof(_unnormed_logpdf_μΣ), μ, Σ, x)
+function ChainRulesCore.rrule(::typeof(_unnormed_logpdf_μΣ), μ::AbstractVector, Σ::AbstractVector, x::AbstractVector)
     s = _unnormed_logpdf_μΣ(μ, Σ, x)
-
+    pμ = ProjectTo(μ)
+    pΣ = ProjectTo(Σ)
+    px = ProjectTo(x)
     function _unormed_logpdf_μΣ_pullback(Δ)
         Δx = x .- μ
         invΣ = inv.(Σ)
-        dμ = @thunk(Δ.*Δx.*invΣ)
-        dx = @thunk(-Δ.*Δx.*invΣ)
-        dΣ = @thunk(Δ.*abs2.(Δx).*invΣ.^2/2)
+        dμ = @thunk(pμ(Δ.*Δx.*invΣ))
+        dx = @thunk(pΣ(-Δ.*Δx.*invΣ))
+        dΣ = @thunk(px(Δ.*abs2.(Δx).*invΣ.^2/2))
         return NoTangent(), dμ, dΣ, dx
     end
 
@@ -73,15 +75,18 @@ function ChainRulesCore.rrule(::typeof(_closurephasenorm), μ, Σ::AbstractVecto
     return -n*log2π - v, _closurephasenorm_pullback
 end
 
-function ChainRulesCore.rrule(::typeof(_cp_logpdf), μ, Σ, x)
+function ChainRulesCore.rrule(::typeof(_cp_logpdf), μ::AbstractVector, Σ::AbstractVector, x::AbstractVector)
     s = _cp_logpdf(μ, Σ, x)
+    pμ = ProjectTo(μ)
+    pΣ = ProjectTo(Σ)
+    px = ProjectTo(x)
 
     function _cp_logpdf_pullback(Δ)
         Σinv = inv.(Σ)
         ss = sin.(x .- μ)
-        dμ = @thunk(Δ.*ss.*Σinv)
-        dx = @thunk(-Δ.*ss.*Σinv)
-        dΣ = @thunk(-Δ.*(cos.(x .- μ) .- 1).*Σinv.^2)
+        dμ = @thunk(pμ(Δ.*ss.*Σinv))
+        dx = @thunk(px(-Δ.*ss.*Σinv))
+        dΣ = @thunk(pΣ(-Δ.*(cos.(x .- μ) .- 1).*Σinv.^2))
         return NoTangent(), dμ, dΣ, dx
     end
     return s, _cp_logpdf_pullback
