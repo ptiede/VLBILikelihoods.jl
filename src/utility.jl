@@ -14,14 +14,14 @@ function _gaussnorm(μ, Σ::AbstractVector)
     return logw
 end
 
-function _gaussnorm(μ, Σ::PDMat)
+function _gaussnorm(μ, Σ::AbstractPDMat)
     @assert length(μ) == size(Σ,1) "Mean and Cov vector are not the same dimension"
     n = length(μ)
     ldet = logdet(Σ)
     return -n/2*log2π - ldet/2
 end
 
-function ChainRulesCore.rrule(::typeof(_gaussnorm), μ, Σ::PDMat)
+function ChainRulesCore.rrule(::typeof(_gaussnorm), μ, Σ::AbstractPDMat)
     y = _gaussnorm(μ,  Σ)
     function _gaussnorm_pullback(Δ)
         invΣ = inv(Σ)
@@ -33,4 +33,4 @@ end
 
 
 
-_chi2(dx, Σ) = invquad(Σ, dx)/2
+_chi2(dx, Σ) = abs(invquad(Σ, dx))/2

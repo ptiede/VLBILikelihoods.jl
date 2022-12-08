@@ -44,7 +44,7 @@ function AmplitudeLikelihood(μ::AbstractVector, Σ::AbstractMatrix)
 end
 
 
-function AmplitudeLikelihood(μ::AbstractVector, Σ::PDMat)
+function AmplitudeLikelihood(μ::AbstractVector, Σ::AbstractPDMat)
     lognorm = _gaussnorm(μ, Σ)
     return AmplitudeLikelihood(μ, Σ, lognorm)
 end
@@ -56,7 +56,7 @@ function unnormed_logpdf(d::AmplitudeLikelihood, x::AbstractVector)
     return _unnormed_logpdf_μΣ(d.μ, d.Σ, x)
 end
 
-function unnormed_logpdf(d::AmplitudeLikelihood{V,P}, x::AbstractVector) where {V, P<:PDMat}
+function unnormed_logpdf(d::AmplitudeLikelihood{V,P}, x::AbstractVector) where {V, P<:AbstractPDMat}
     return _amp_logpdf_full(d.μ, d.Σ, x)
 end
 
@@ -72,7 +72,7 @@ function Distributions._rand!(rng::Random.AbstractRNG, d::AmplitudeLikelihood{<:
     return x
 end
 
-function Distributions._rand!(rng::Random.AbstractRNG, d::AmplitudeLikelihood{<:AbstractVector, <:PDMat}, x::AbstractVector)
+function Distributions._rand!(rng::Random.AbstractRNG, d::AmplitudeLikelihood{<:AbstractVector, <:AbstractPDMat}, x::AbstractVector)
     randn!(rng, x)
     PDMats.unwhiten!(d.Σ, x)
     x .+= d.μ

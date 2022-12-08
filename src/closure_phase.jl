@@ -25,7 +25,7 @@ function ClosurePhaseLikelihood(μ::AbstractVector, Σ::AbstractMatrix)
     return ClosurePhaseLikelihood(μ, Σpd)
 end
 
-function ClosurePhaseLikelihood(μ::AbstractVector, Σ::PDMat)
+function ClosurePhaseLikelihood(μ::AbstractVector, Σ::AbstractPDMat)
     lognorm = _gaussnorm(μ, Σ)
     return ClosurePhaseLikelihood(μ, Σ, lognorm)
 end
@@ -40,7 +40,7 @@ end
 # # We mark the norms as non-differentiable. Why? Because they are wrong anyways!
 # ChainRulesCore.@non_differentiable _closurephasenorm(μ, Σ::PDMat)
 
-function unnormed_logpdf(d::ClosurePhaseLikelihood{V,P}, x) where {V, P<:PDMat}
+function unnormed_logpdf(d::ClosurePhaseLikelihood{V,P}, x) where {V, P<:AbstractPDMat}
     return _cp_logpdf_full(d.μ, d.Σ, x)
 end
 
@@ -51,7 +51,7 @@ function _cp_logpdf_full(μ, Σ, x)
 end
 
 
-function Distributions._rand!(rng::Random.AbstractRNG, d::ClosurePhaseLikelihood{<:AbstractVector, <:PDMat}, x::AbstractVector)
+function Distributions._rand!(rng::Random.AbstractRNG, d::ClosurePhaseLikelihood{<:AbstractVector, <:AbstractPDMat}, x::AbstractVector)
     randn!(rng, x)
     PDMats.unwhiten!(d.Σ, x)
     x .+= d.μ
