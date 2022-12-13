@@ -7,8 +7,8 @@ function ChainRulesCore.rrule(::typeof(_unnormed_logpdf_μΣ), μ::AbstractVecto
         Δx = x .- μ
         invΣ = inv.(Σ)
         dμ = @thunk(pμ(Δ.*Δx.*invΣ))
-        dx = @thunk(pΣ(-Δ.*Δx.*invΣ))
-        dΣ = @thunk(px(Δ.*abs2.(Δx).*invΣ.^2/2))
+        dx = @thunk(px(-Δ.*Δx.*invΣ))
+        dΣ = @thunk(pΣ(Δ.*abs2.(Δx).*invΣ.^2/2))
         return NoTangent(), dμ, dΣ, dx
     end
 
