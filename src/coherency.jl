@@ -33,9 +33,9 @@ end
 
 function unnormed_logpdf(d::CoherencyLikelihood{<:StructVector{<:SA.StaticMatrix{2,2}}, <:StructVector{<:SA.StaticMatrix{2,2}}},
                          x::StructVector{<:SA.StaticMatrix{2,2}})
-    μs = StructArrays.components(d.μ)
-    Σs = StructArrays.components(d.Σ)
-    xs = StructArrays.components(x)
+    μs = values(StructArrays.components(d.μ))
+    Σs = values(StructArrays.components(d.Σ))
+    xs = values(StructArrays.components(x))
     s = sum(_unnormed_logpdf_μΣ.(μs, Σs, xs))
     return s
 end

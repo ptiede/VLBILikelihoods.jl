@@ -42,5 +42,6 @@
     test_rrule(VLBILikelihoods._coherencynorm, μ, Σ)
     ll(d, x) = unnormed_logpdf(d, x)
     ll(μ, Σ, x) = unnormed_logpdf(CoherencyLikelihood(μ, Σ), x)
+
     @inferred ll(d, x)
 end
