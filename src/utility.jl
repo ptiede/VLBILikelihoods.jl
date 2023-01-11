@@ -21,6 +21,8 @@ function _gaussnorm(μ, Σ::AbstractPDMat)
     return -n/2*log2π - ldet/2
 end
 
+# These will be removed when https://github.com/JuliaStats/Distributions.jl/pull/1554
+# is finally merged
 function ChainRulesCore.rrule(::typeof(_gaussnorm), μ, Σ::AbstractPDMat)
     y = _gaussnorm(μ,  Σ)
     function _gaussnorm_pullback(Δ)

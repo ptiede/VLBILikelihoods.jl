@@ -11,7 +11,7 @@ Base.eltype(d::AmplitudeLikelihood) = promote_type(eltype(d.μ), eltype(d.Σ))
 Dists.insupport(::AmplitudeLikelihood, x) = true
 
 """
-    AmplitudeLikelihood(μ, Σ::Union{AbstractVector, Diagonal})
+    AmplitudeLikelihood(μ, Σ::Union{AbstractVector, AbstractMatrix})
 
 Forms the likelihood for amplitudes from the mean vector `μ` and
 the covariance matrix `Σ`. If Σ is vector or a diagonal
