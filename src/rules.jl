@@ -5,7 +5,9 @@ function ChainRulesCore.rrule(::typeof(_unnormed_logpdf_μΣ), μ::AbstractVecto
     px = ProjectTo(x)
     function _unormed_logpdf_μΣ_pullback(Δ)
         Δx = x .- μ
+        Δx .= ifelse.(Base.:!.(isnan.(Δx)), Δx, zero(eltype(Δx)))
         invΣ = inv.(Σ)
+        invΣ .=  ifelse.(Base.:!.(isnan.(invΣ)), invΣ, zero(eltype(invΣ)))
         dμ = @thunk(pμ(Δ.*Δx.*invΣ))
         dx = @thunk(px(-Δ.*Δx.*invΣ))
         dΣ = @thunk(pΣ(Δ.*abs2.(Δx).*invΣ.^2/2))

@@ -1,7 +1,9 @@
 function _unnormed_logpdf_μΣ(μ, Σ, x)
     s = zero(eltype(Σ))
+    z = zero(s)
     @simd for i in eachindex(μ, Σ)
-        s += -abs2(x[i] - μ[i])*inv(Σ[i])
+        tmp = ifelse(!isnan(x[i]), -abs2(x[i] - μ[i])*inv(Σ[i]), z)
+        s += tmp
     end
     return s/2
 end
@@ -10,7 +12,7 @@ end
 function _gaussnorm(μ, Σ::AbstractVector)
     @assert length(μ) == length(Σ) "Mean and std. dev. vector are not the same length"
     n = length(μ)
-    logw = -n/2*log2π - sum(log, Σ)/2
+    logw = -n/2*log2π - sum(log, filter!(!isnan, Σ))/2
     return logw
 end
 
