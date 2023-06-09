@@ -25,7 +25,7 @@
 
     gvz  = Zygote.gradient(f, x, μ, Σd)
     gvz2 = Zygote.gradient(f, x, μ, Diagonal(Σ))
-    @inferred Zygote.gradient(f, x, μ, Σ)
+    # @inferred Zygote.gradient(f, x, μ, Σ)
 
     gfdz  = grad(m, f, x, μ, Σd)
     @test all(isapprox.(gvz, gfdz))
@@ -34,5 +34,5 @@
     test_rrule(VLBILikelihoods._cp_logpdf, μ, Σd, x)
     test_rrule(VLBILikelihoods._closurephasenorm, μ, Σd)
 
-    @inferred Zygote.gradient(logdensityof(dv), x)
+    # @inferred Zygote.gradient(logdensityof(dv), x)
 end

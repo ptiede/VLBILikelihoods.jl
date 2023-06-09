@@ -51,7 +51,7 @@ lognorm(d::AbstractVLBIDistributions)  = d.lognorm
 # For AbstractVLBI distributions we do a quick adjustment given how we
 # have structured the problem.
 function Dists.logpdf(d::AbstractVLBIDistributions, x::AbstractVector)
-    @assert Dists.insupport(d, x)
+    !Dists.insupport(d, x) && return -Inf
     return unnormed_logpdf(d, x) + lognorm(d)
 end
 
