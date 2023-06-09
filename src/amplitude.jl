@@ -143,6 +143,10 @@ function ChainRulesCore.rrule(::typeof(unnormed_logpdf), d::RiceAmplitudeLikelih
     return out, _rice_pullback
 end
 
+function ChainRulesCore.rrule(::Type{<:RiceAmplitudeLikelihood}, μ::AbstractVector, Σ::AbstractVector)
+    d = RiceAmplitudeLikelihood(μ, Σ)
+end
+
 Dists.mean(d::RiceAmplitudeLikelihood) = sqrt.(d.Σ .* π/2).*_L12.(-d.μ.^2 .* inv.(2 .* d.Σ))
 function Dists.var(d::RiceAmplitudeLikelihood)
     T = eltype(d)
