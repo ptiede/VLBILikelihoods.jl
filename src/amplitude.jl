@@ -87,7 +87,7 @@ end
 
 Base.length(d::RiceAmplitudeLikelihood) = length(d.μ)
 Base.eltype(d::RiceAmplitudeLikelihood) = promote_type(eltype(d.μ), eltype(d.Σ))
-Dists.insupport(::RiceAmplitudeLikelihood, x) = true
+Dists.insupport(::RiceAmplitudeLikelihood, x) = all(>(0), x)
 
 """
     RiceAmplitudeLikelihood(μ, Σ::Union{AbstractVector, Diagonal})
@@ -114,16 +114,33 @@ _L12(x) = exp(x/2)*((1-x)*besseli0(-x/2) - x*besseli1(-x/2))
 function unnormed_logpdf(d::RiceAmplitudeLikelihood, x::AbstractVector)
     return sum(zip(d.μ, d.Σ, x)) do (μ, Σ, xx)
         # we use besseli0x for numerical stability for high SNR points
-        return -(xx^2 + μ^2)*inv(2*Σ) + log(xx*besseli0x(xx*μ/Σ)) + xx*μ/Σ
+        return lpdf_rice(xx, μ, Σ)
     end
 end
 
+lpdf_rice(x, μ, Σ) = -(x^2 + μ^2)*inv(2*Σ) + log(x*besseli0x(x*μ/Σ)) + x*μ/Σ
+
 function ChainRulesCore.rrule(::typeof(unnormed_logpdf), d::RiceAmplitudeLikelihood, x::AbstractVector)
-    ℓ =
-    function _ricelklhd_logpdf_pullback(Δ)
-
+    (;μ, Σ) = d
+    dx = zero(x)
+    dμ = zero(μ)
+    dΣ = zero(Σ)
+    out = zero(eltype(x))
+    for i in eachindex(x, μ, Σ)
+        z = x[i]*μ[i]/Σ[i]
+        κ = inv(Σ[i])
+        i0 = besseli0x(z)
+        i1 = besseli1x(z)
+        di = (i1/i0 - 1)
+        dΣ[i] = (x[i]^2 + μ[i]^2)κ^2/2 - (di + 1)*z*κ
+        dx[i] = -x[i]*κ + inv(x[i]) + (di + 1)*μ[i]*κ
+        dμ[i] = -μ[i]*κ  + (di + 1)*x[i]*κ
+        out += lpdf_rice(x[i], μ[i], Σ[i])
     end
-
+    function _rice_pullback(Δ)
+        return NoTangent(), Tangent{typeof(d)}(;μ=Δ*dμ, Σ=Δ*dΣ), Δ*dx
+    end
+    return out, _rice_pullback
 end
 
 Dists.mean(d::RiceAmplitudeLikelihood) = sqrt.(d.Σ .* π/2).*_L12.(-d.μ.^2 .* inv.(2 .* d.Σ))
