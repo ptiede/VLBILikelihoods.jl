@@ -34,3 +34,37 @@
     @test all(isapprox.(gvz, gfdz))
 
 end
+
+@testset "Rice Amplitude Likelihood" begin
+
+    m = central_fdm(5,1)
+
+    μ = rand(50)
+    Σ = 5 .* Diagonal(ones(50))
+    Σd = diag(Σ)
+
+    dv = RiceAmplitudeLikelihood(μ, Σ)
+    dv2 = RiceAmplitudeLikelihood(μ, Σd)
+
+    x = rand(dv)
+    @test all(isapprox.(mean(rand(dv, 10_000),dims=2), mean(dv); atol=5*sqrt(maximum(Σ))/(sqrt(10_000))))
+
+    @test logpdf(dv, x) ≈ logpdf(dv, x)
+    @test logpdf(dv2, x) ≈ logpdf(dv2, x)
+
+    test_rrule(AmplitudeLikelihood, μ, Σd)
+
+    @inferred Zygote.gradient(logdensityof(dv), x)
+    @inferred Zygote.gradient(logdensityof(dv2), x)
+
+    f(x, μ, Σ) = logdensityof(AmplitudeLikelihood(μ, Σ), x)
+
+
+    gvz  = Zygote.gradient(f, x, μ, Σd)
+    gvz2 = Zygote.gradient(f, x, μ, Diagonal(Σ))
+    @inferred Zygote.gradient(f, x, μ, Σ)
+
+    gfdz  = grad(m, f, x, μ, Σd)
+    @test all(isapprox.(gvz, gfdz))
+
+end

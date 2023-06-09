@@ -101,7 +101,7 @@ This is the correct likelihood distribution for visibility amplitudes, but it is
 than the Gaussian approximation `AmplitudeLikelihood`. Additionally, i
 """
 function RiceAmplitudeLikelihood(μ::AbstractVector, Σ::AbstractVector)
-    lognorm = -2*sum(log, Σ)
+    lognorm = -sum(log, Σ)
     return RiceAmplitudeLikelihood(μ, Σ, lognorm)
 end
 
@@ -114,8 +114,16 @@ _L12(x) = exp(x/2)*((1-x)*besseli0(-x/2) - x*besseli1(-x/2))
 function unnormed_logpdf(d::RiceAmplitudeLikelihood, x::AbstractVector)
     return sum(zip(d.μ, d.Σ, x)) do (μ, Σ, xx)
         # we use besseli0x for numerical stability for high SNR points
-        return -(xx^2 + μ^2)*inv(2*Σ) + log(xx*besseli0x(xx*μ/Σ)) - xx*μ/Σ
+        return -(xx^2 + μ^2)*inv(2*Σ) + log(xx*besseli0x(xx*μ/Σ)) + xx*μ/Σ
     end
+end
+
+function ChainRulesCore.rrule(::typeof(unnormed_logpdf), d::RiceAmplitudeLikelihood, x::AbstractVector)
+    ℓ =
+    function _ricelklhd_logpdf_pullback(Δ)
+
+    end
+
 end
 
 Dists.mean(d::RiceAmplitudeLikelihood) = sqrt.(d.Σ .* π/2).*_L12.(-d.μ.^2 .* inv.(2 .* d.Σ))
