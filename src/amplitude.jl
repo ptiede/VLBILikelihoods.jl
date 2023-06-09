@@ -145,6 +145,13 @@ end
 
 function ChainRulesCore.rrule(::Type{<:RiceAmplitudeLikelihood}, μ::AbstractVector, Σ::AbstractVector)
     d = RiceAmplitudeLikelihood(μ, Σ)
+    function _riceamplitude_pullback(Δ)
+        dd = unthunk(Δ)
+        Δμ = dd.μ
+        ΔΣ = dd.Σ - inv.(Σ)*dd.lognorm
+        return NoTangent(), Δμ, ΔΣ
+    end
+    return d, _riceamplitude_pullback
 end
 
 Dists.mean(d::RiceAmplitudeLikelihood) = sqrt.(d.Σ .* π/2).*_L12.(-d.μ.^2 .* inv.(2 .* d.Σ))
