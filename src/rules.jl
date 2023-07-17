@@ -24,10 +24,10 @@ function ChainRulesCore.rrule(::typeof(_chi2), dx::AbstractVector, Σ)
     function _chi2_pullback(Δ)
         ∂ = ChainRulesCore.unthunk(Δ)
         ∂x = ∂ * z
-        ∂Σ = ChainRulesCore.@thunk(begin
-            ∂J = ∂ * dx * dx'./2
-            - ((Σ \ ∂J) / Σ)./2
-        end)
+        ∂Σ = ZeroTangent()#ChainRulesCore.@thunk(begin
+            #∂J = ∂ * dx * dx'./2
+            #- ((Σ \ ∂J) / Σ)./2
+        #end)
         return (ChainRulesCore.NoTangent(), ∂x, ∂Σ)
     end
     return y, _chi2_pullback

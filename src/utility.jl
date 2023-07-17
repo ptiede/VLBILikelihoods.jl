@@ -36,6 +36,6 @@ function ChainRulesCore.rrule(::typeof(_gaussnorm), μ, Σ::AbstractPDMat)
     return y, _gaussnorm_pullback
 end
 
+@noinline chol(Σ::PDSparseMat) = Σ.chol
 
-
-_chi2(dx, Σ) = abs(invquad(Σ, dx))/2
+_chi2(dx, Σ) = abs(dot(dx, chol(Σ)\dx))/2
