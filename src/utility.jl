@@ -3,7 +3,7 @@ function _unnormed_logpdf_μΣ(μ, Σ, x)
     z = zero(s)
     for i in eachindex(μ, Σ)
         # tmp = ifelse(!(isnan(x[i])&&isnan(Σ[i])), -abs2(x[i] - μ[i])*inv(Σ[i]), z)
-        tmp = ifelse(!(isnan(x[i])&&isnan(Σ[i])), -abs2(x[i] - μ[i])*inv(Σ[i]), z)
+        tmp = ifelse(!(isnan(x[i]) || isnan(Σ[i])), -abs2(x[i] - μ[i])*inv(Σ[i]), z)
         s += tmp
     end
     return s/2
