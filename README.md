@@ -10,7 +10,8 @@ This package has a number of high-performance likelihoods necessary for VLBI mod
 
  - Complex Visibilties
  - Coherency matrices
- - Closure Phases
- - Amplitudes including log closure amplitudes
+ - Amplitudes
+ - Log Closure Amplitudes (full covariance and diagonal)
+ - Closure Phases (full covariance and diagonal)
  
- Currently most of the distributions will only work on the CPU but in the future we expect to adjust these to work on accelerated platforms as well.
+ Currently, most of the distributions will only work on the CPU, but in the future, we expect to adjust these to work on accelerated platforms as well.
