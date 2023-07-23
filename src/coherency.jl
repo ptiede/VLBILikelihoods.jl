@@ -17,7 +17,6 @@ Creates the coherency matrix likelihood distribution which is a Gaussian over th
 You will get the best performance is all the vectors are given as StructVectors{<:StaticMatrices{2,2}}, especially
 when computing gradients with an AD engine like Zygote.
 """
-
 struct CoherencyLikelihood{V1,V2,W} <: AbstractVLBIDistributions
     μ::V1
     Σ::V2
