@@ -38,4 +38,4 @@ end
 
 @noinline chol(Σ::PDSparseMat) = Σ.chol
 
-_chi2(dx, Σ) = abs(dot(dx, chol(Σ)\dx))/2
+_chi2(dx, Σ) = abs(invquad(Σ, dx))/2
