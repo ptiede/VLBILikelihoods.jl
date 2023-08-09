@@ -1,6 +1,6 @@
 export AmplitudeLikelihood, RiceAmplitudeLikelihood
 
-struct AmplitudeLikelihood{V1,V2<:Union{AbstractVector, AbstractPDMat},W} <: AbstractVLBIDistributions
+struct AmplitudeLikelihood{V1,V2<:Union{AbstractVector, CholeskyFactor},W} <: AbstractVLBIDistributions
     μ::V1
     Σ::V2
     lognorm::W
@@ -39,24 +39,22 @@ end
 
 
 function AmplitudeLikelihood(μ::AbstractVector, Σ::AbstractMatrix)
-    Σpd = PDMat(Σ)
+    Σpd = CholeskyFactor(Σ)
     return AmplitudeLikelihood(μ, Σpd)
 end
 
 
-function AmplitudeLikelihood(μ::AbstractVector, Σ::AbstractPDMat)
+function AmplitudeLikelihood(μ::AbstractVector, Σ::CholeskyFactor)
     lognorm = _gaussnorm(μ, Σ)
     return AmplitudeLikelihood(μ, Σ, lognorm)
 end
-
-
 
 
 function unnormed_logpdf(d::AmplitudeLikelihood, x::AbstractVector)
     return _unnormed_logpdf_μΣ(d.μ, d.Σ, x)
 end
 
-function unnormed_logpdf(d::AmplitudeLikelihood{V,P}, x::AbstractVector) where {V, P<:AbstractPDMat}
+function unnormed_logpdf(d::AmplitudeLikelihood{V,P}, x::AbstractVector) where {V, P<:CholeskyFactor}
     return _amp_logpdf_full(d.μ, d.Σ, x)
 end
 
@@ -72,10 +70,12 @@ function Distributions._rand!(rng::Random.AbstractRNG, d::AmplitudeLikelihood{<:
     return x
 end
 
-function Distributions._rand!(rng::Random.AbstractRNG, d::AmplitudeLikelihood{<:AbstractVector, <:AbstractPDMat}, x::AbstractVector)
+function Distributions._rand!(rng::Random.AbstractRNG, d::AmplitudeLikelihood{<:AbstractVector, <:CholeskyFactor}, x::AbstractVector)
     randn!(rng, x)
-    PDMats.unwhiten!(d.Σ, x)
-    x .+= d.μ
+    chol = d.Σ
+    r= zero(x)
+    _color!(r, chol, x)
+    x .= d.μ .+ r
     return x
 end
 

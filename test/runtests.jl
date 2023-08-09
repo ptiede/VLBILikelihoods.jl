@@ -8,6 +8,7 @@ using Zygote
 using LinearAlgebra
 using FiniteDifferences
 using StructArrays
+using SparseArrays
 
 @testset "VLBILikelihoods.jl" begin
 

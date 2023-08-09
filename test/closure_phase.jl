@@ -1,17 +1,13 @@
-@testset "Closure Phase" begin
-
+function closure_test(μ, Σ)
     m = central_fdm(5,1)
 
-
-    μ = rand(50)
-    σ = rand(50,50)
-    Σ = 0.5.*(σ .+ σ') .+ 5 .* Diagonal(ones(50))
-    Σd = diag(Σ)
-
+    Σd = Array(diag(Σ))
     dv = ClosurePhaseLikelihood(μ, Σ)
     dv2 = ClosurePhaseLikelihood(μ, Σd)
     @test VLBILikelihoods.unnormed_logpdf(dv, μ) ≈ 0.0
     @test VLBILikelihoods.unnormed_logpdf(dv2, μ) ≈ 0.0
+    @inferred logdensityof(dv, rand(dv))
+    @inferred logdensityof(dv2, rand(dv))
 
     x = rand(dv)
     @test all(isapprox.(mean(rand(dv, 10000),dims=2), μ; atol=5*sqrt(maximum(Σ))/(sqrt(10_000))))
@@ -33,6 +29,22 @@
 
     test_rrule(VLBILikelihoods._cp_logpdf, μ, Σd, x)
     test_rrule(VLBILikelihoods._closurephasenorm, μ, Σd)
+end
 
-    # @inferred Zygote.gradient(logdensityof(dv), x)
+@testset "Closure Phase" begin
+
+
+    @testset "Sparse" begin
+        μ = rand(50)
+        σ = sprand(50,50, 0.05)
+        Σ = 0.5.*(σ + σ') + 5 .* Diagonal(ones(50))
+        closure_test(μ, Σ)
+    end
+
+    @testset "Dense" begin
+        μ = rand(50)
+        σ = rand(50,50)
+        Σ = 0.5.*(σ + σ') + 5 .* Diagonal(ones(50))
+        closure_test(μ, Σ)
+    end
 end

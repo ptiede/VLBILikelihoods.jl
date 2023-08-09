@@ -1,19 +1,22 @@
-@testset "Amplitude Likelihood" begin
-
+function amplitude_test(μ, Σ)
     m = central_fdm(5,1)
 
-    μ = rand(50)
-    σ = rand(50,50)
-    Σ = 0.5.*(σ .+ σ') .+ 5 .* Diagonal(ones(50))
-    Σd = diag(Σ)
+    Σd = Array(diag(Σ))
 
     dv = AmplitudeLikelihood(μ, Σ)
     dv2 = AmplitudeLikelihood(μ, Σd)
-    dd = MvNormal(μ, Σ)
+    @inferred logdensityof(dv, rand(dv))
+    @inferred logdensityof(dv2, rand(dv))
+
+    dd = MvNormal(μ, Array(Σ))
     dd2 = MvNormal(μ, Diagonal(Σd))
 
     x = rand(dv)
-    @test all(isapprox.(mean(rand(dv, 10000),dims=2), μ; atol=5*sqrt(maximum(Σ))/(sqrt(10_000))))
+    λmax = maximum(eigvals(Matrix(Σ)))
+    @test all(isapprox.(mean(rand(dv, 10_000),dims=2), μ; atol=10*sqrt(λmax)/(sqrt(10_000))))
+    @test all(isapprox.(std(rand(dv, 500_000),dims=2), sqrt.(Σd); atol=2e-1))
+    @test all(isapprox.(mean(rand(dv2, 10_000),dims=2), μ; atol=5*sqrt(maximum(Σd))/(sqrt(10_000))))
+    @test all(isapprox.(std(rand(dv2, 500_000),dims=2), sqrt.(Σd); atol=5e-2))
 
     @test logpdf(dv, x) ≈ logpdf(dd, x)
     @test logpdf(dv2, x) ≈ logpdf(dd2, x)
@@ -32,7 +35,22 @@
 
     gfdz  = grad(m, f, x, μ, Σd)
     @test all(isapprox.(gvz, gfdz))
+end
 
+@testset "Amplitude Likelihood" begin
+    @testset "Sparse" begin
+        μ = rand(50)
+        σ = sprand(50,50, 0.05)
+        Σ = 0.5.*(σ + σ') + 5 .* Diagonal(ones(50))
+        amplitude_test(μ, Σ)
+    end
+
+    @testset "Dense" begin
+        μ = rand(50)
+        σ = rand(50,50)
+        Σ = 0.5.*(σ + σ') + 5 .* Diagonal(ones(50))
+        amplitude_test(μ, Σ)
+    end
 end
 
 @testset "Rice Amplitude Likelihood" begin
