@@ -33,6 +33,12 @@ end
 
 @testset "Closure Phase" begin
 
+    μ = rand(50)
+    Σ = rand(50)
+    d1 = ClosurePhaseLikelihood(μ, Diagonal(Σ))
+    d2 = ClosurePhaseLikelihood(μ, Σ)
+    @test d1 == d2
+
 
     @testset "Sparse" begin
         μ = rand(50)
