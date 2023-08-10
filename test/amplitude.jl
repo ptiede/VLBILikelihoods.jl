@@ -66,6 +66,7 @@ end
 
     x = rand(dv)
     @test all(isapprox.(mean(rand(dv, 10_000),dims=2), mean(dv); atol=5*sqrt(maximum(Σ))/(sqrt(10_000))))
+    @test all(isapprox.(var(rand(dv, 10_000),dims=2), var(dv); atol=50*sqrt(maximum(Σ))/(sqrt(10_000))))
 
     @test logpdf(dv, x) ≈ logpdf(dv, x)
     @test logpdf(dv2, x) ≈ logpdf(dv2, x)
