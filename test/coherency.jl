@@ -24,6 +24,9 @@
     d = CoherencyLikelihood(μ, Σ)
     darr = CoherencyLikelihood(Array(μ), Array(Σ))
 
+    @test eltype(d) == eltype(μ)
+    @test length(d) == length(μ)
+
     @test d.lognorm ≈ darr.lognorm
     @test logdensityof(d, x) ≈ logdensityof(darr, Array(x))
 
