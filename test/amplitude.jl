@@ -5,6 +5,7 @@ function amplitude_test(μ, Σ)
 
     dv = AmplitudeLikelihood(μ, Σ)
     dv2 = AmplitudeLikelihood(μ, Σd)
+    @test dv2 == AmplitudeLikelihood(μ, Diagonal(Σd))
     @inferred logdensityof(dv, rand(dv))
     @inferred logdensityof(dv2, rand(dv))
 
