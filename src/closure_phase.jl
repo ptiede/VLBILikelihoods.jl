@@ -35,7 +35,7 @@ to the likelihood, or **better yet** fit complex visibilities directly.
 
 [^1]: This distribution is defined on the n torus where n is the number of closure phases.
 """
-struct ClosurePhaseLikelihood{V1,V2<:Union{AbstractVector, AbstractPDMat},W} <: AbstractVLBIDistributions
+struct ClosurePhaseLikelihood{V1,V2<:Union{AbstractVector, AbstractMatrix},W} <: AbstractVLBIDistributions
     """mean closure phase"""
     μ::V1
     """
@@ -60,11 +60,11 @@ function ClosurePhaseLikelihood(μ::AbstractVector, Σ::Diagonal)
 end
 
 function ClosurePhaseLikelihood(μ::AbstractVector, Σ::AbstractMatrix)
-    Σpd = PDMat(Σ)
+    Σpd = CholeskyFactor(Σ)
     return ClosurePhaseLikelihood(μ, Σpd)
 end
 
-function ClosurePhaseLikelihood(μ::AbstractVector, Σ::AbstractPDMat)
+function ClosurePhaseLikelihood(μ::AbstractVector, Σ::CholeskyFactor)
     lognorm = _gaussnorm(μ, Σ)
     return ClosurePhaseLikelihood(μ, Σ, lognorm)
 end
@@ -77,9 +77,9 @@ end
 
 
 # # We mark the norms as non-differentiable. Why? Because they are wrong anyways!
-# ChainRulesCore.@non_differentiable _closurephasenorm(μ, Σ::PDMat)
+# ChainRulesCore.@non_differentiable _closurephasenorm(μ, Σ::CholeskyFactor)
 
-function unnormed_logpdf(d::ClosurePhaseLikelihood{V,P}, x) where {V, P<:AbstractPDMat}
+function unnormed_logpdf(d::ClosurePhaseLikelihood{V,P}, x) where {V, P<:CholeskyFactor}
     return _cp_logpdf_full(d.μ, d.Σ, x)
 end
 
@@ -90,10 +90,11 @@ function _cp_logpdf_full(μ, Σ, x)
 end
 
 
-function Distributions._rand!(rng::Random.AbstractRNG, d::ClosurePhaseLikelihood{<:AbstractVector, <:AbstractPDMat}, x::AbstractVector)
+function Distributions._rand!(rng::Random.AbstractRNG, d::ClosurePhaseLikelihood{<:AbstractVector, <:CholeskyFactor}, x::AbstractVector)
     randn!(rng, x)
-    PDMats.unwhiten!(d.Σ, x)
-    x .+= d.μ
+    chol = d.Σ
+    r = _color!(zero(x), chol, x)
+    x .= d.μ .+ r
     return x
 end
 

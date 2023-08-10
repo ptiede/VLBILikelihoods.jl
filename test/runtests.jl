@@ -8,6 +8,7 @@ using Zygote
 using LinearAlgebra
 using FiniteDifferences
 using StructArrays
+using SparseArrays
 
 @testset "VLBILikelihoods.jl" begin
 
@@ -41,6 +42,16 @@ using StructArrays
 
 
 
+    end
+
+    @testset "CholeskyFactor" begin
+        m = sprand(50, 50, 0.01)
+        Σ = 0.5.*(m .+ m') + 5 .* Diagonal(ones(50))
+        c = VLBILikelihoods.CholeskyFactor(Σ)
+        @test parent(c) === Σ
+        @test size(Σ) == size(c)
+        @test getindex(Σ, 1, 1) == getindex(c, 1, 1)
+        @test cholesky(c) === c
     end
 
     include(joinpath(@__DIR__, "amplitude.jl"))

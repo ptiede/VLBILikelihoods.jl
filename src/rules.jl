@@ -35,7 +35,7 @@ end
 
 
 function ChainRulesCore.rrule(config::RuleConfig{>:HasReverseMode}, T::Type{<:Union{AmplitudeLikelihood, ClosurePhaseLikelihood}}, μ::AbstractVector, Σ::AbstractMatrix)
-    Σpd = PDMat(Σ)
+    Σpd = CholeskyFactor(Σ)
     d = T(μ, Σpd)
 
     # get the normalization from the rrule

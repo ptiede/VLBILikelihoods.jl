@@ -6,10 +6,11 @@ using Bessels
 using DensityInterface
 using Distributions
 const Dists = Distributions
-using PDMats
 using LinearAlgebra
 using ChainRulesCore
 using Random
+using SparseArrays
+using SuiteSparse
 using StructArrays
 using StaticArraysCore
 const SA = StaticArraysCore
@@ -55,6 +56,7 @@ function Dists.logpdf(d::AbstractVLBIDistributions, x::AbstractVector)
     return unnormed_logpdf(d, x) + lognorm(d)
 end
 
+include("cholesky.jl")
 include("utility.jl")
 include("amplitude.jl")
 include("closure_phase.jl")
