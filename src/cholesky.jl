@@ -18,7 +18,7 @@ function _color!(r, Σ::CholeskyFactor, x)
     return r
 end
 
-function _color!(r, chol::CholeskyFactor{T, <:AbstractMatrix{T}, C}, x) where {T, C<:SparseArrays.CHOLMOD.Factor}
+function _color!(r, chol::CholeskyFactor{T, <:AbstractMatrix{T}, C}, x) where {T, C<:SuiteSparse.CHOLMOD.Factor}
     cho = chol.cho
     PtL = sparse(cho.L)[cho.p, :]
     mul!(r, PtL, x)

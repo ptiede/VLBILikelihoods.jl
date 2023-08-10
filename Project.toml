@@ -15,6 +15,7 @@ Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 StaticArraysCore = "1e83bf80-4336-4d27-bf5d-d5a4f845583c"
 StructArrays = "09ab397b-f2b6-538f-b94a-2f83cf4a842a"
+SuiteSparse = "4607b0f0-06f3-5cda-b6b1-a6196a1729e9"
 
 [compat]
 Bessels = "0.2"

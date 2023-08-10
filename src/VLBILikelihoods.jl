@@ -10,6 +10,7 @@ using LinearAlgebra
 using ChainRulesCore
 using Random
 using SparseArrays
+using SuiteSparse
 using StructArrays
 using StaticArraysCore
 const SA = StaticArraysCore
