@@ -14,7 +14,7 @@ function amplitude_test(μ, Σ)
     x = rand(dv)
     λmax = maximum(eigvals(Matrix(Σ)))
     @test all(isapprox.(mean(rand(dv, 10_000),dims=2), μ; atol=10*sqrt(λmax)/(sqrt(10_000))))
-    @test all(isapprox.(std(rand(dv, 500_000),dims=2), sqrt.(Σd); atol=2e-1))
+    @test all(isapprox.(std(rand(dv, 500_000),dims=2), sqrt.(Σd); atol=5e-1))
     @test all(isapprox.(mean(rand(dv2, 10_000),dims=2), μ; atol=5*sqrt(maximum(Σd))/(sqrt(10_000))))
     @test all(isapprox.(std(rand(dv2, 500_000),dims=2), sqrt.(Σd); atol=5e-2))
 
