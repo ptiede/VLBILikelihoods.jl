@@ -22,6 +22,11 @@
     Σ = StructVector(SMatrix{2,2}.(ΣRR, ΣLR, ΣRL, ΣLL))
 
     d = CoherencyLikelihood(μ, Σ)
+    darr = CoherencyLikelihood(Array(μ), Array(Σ))
+
+    @test d.lognorm ≈ darr.lognorm
+    @test logdensityof(d, x) ≈ logdensityof(darr, Array(x))
+
     dRR_r = MvNormal(real.(μRR), Diagonal(ΣRR))
     dLL_r = MvNormal(real.(μLL), Diagonal(ΣLL))
     dRL_r = MvNormal(real.(μRL), Diagonal(ΣRL))

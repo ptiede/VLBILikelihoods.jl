@@ -28,15 +28,12 @@ Base.eltype(d::CoherencyLikelihood) = eltype(d.μ)
 Dists.insupport(d::CoherencyLikelihood, x) = true
 
 function CoherencyLikelihood(μ::AbstractVector{<:SA.StaticMatrix{2,2}}, Σ::AbstractVector{<:SA.StaticMatrix{2,2}})
-    lognorm = _coherencynorm(μ, Σ)
-    return CoherencyLikelihood(μ, Σ, lognorm)
+    return CoherencyLikelihood(StructArray(μ), StructArray(Σ), lognorm)
 end
 
-function _coherencynorm(μ, Σ)
-    @assert length(μ) == length(Σ) "Mean and std. dev. vector are not the same length"
-    n = length(μ)
-    logw = -4*n*log2π - sum(sum(x->log.(x), Σ))
-    return logw
+function CoherencyLikelihood(μ::StructVector{<:SA.StaticMatrix{2,2}}, Σ::StructVector{<:SA.StaticMatrix{2,2}})
+    lognorm = _coherencynorm(μ, Σ)
+    return CoherencyLikelihood(μ, Σ, lognorm)
 end
 
 function _coherencynorm(μ::StructVector, Σ::StructVector)
