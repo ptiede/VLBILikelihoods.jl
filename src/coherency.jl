@@ -58,3 +58,16 @@ function unnormed_logpdf(d::CoherencyLikelihood{<:StructVector{<:SA.StaticMatrix
                          x::AbstractVector{<:SA.StaticMatrix{2,2}})
     return unnormed_logpdf(d, StructVector(x))
 end
+
+function Dists._rand!(rng::Random.AbstractRNG, d::CoherencyLikelihood, x::StructVector{<:SA.StaticMatrix{2,2}})
+    μ = d.μ
+    Σ = d.Σ
+    x.:1 .= randn!(rng, x.:1).*sqrt.(Σ.:1)
+    x.:2 .= randn!(rng, x.:2).*sqrt.(Σ.:2)
+    x.:3 .= randn!(rng, x.:3).*sqrt.(Σ.:3)
+    x.:4 .= randn!(rng, x.:4).*sqrt.(Σ.:4)
+    x .+= μ
+    return x
+end
+
+Dists.rand(rng::Random.AbstractRNG, d::CoherencyLikelihood) = Dists._rand!(rng, d, similar(d.μ))
