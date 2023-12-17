@@ -51,5 +51,14 @@
     ll(d, x) = unnormed_logpdf(d, x)
     ll(μ, Σ, x) = unnormed_logpdf(CoherencyLikelihood(μ, Σ), x)
 
+    rand(d)
+    rand(d, 1)
+    @test size(rand(d, 2,3)) == (length(d.μ), 2,3)
+
+    s = rand(d, 1_000_000)
+    m = mean(s, dims=2)
+    Σmax = mapreduce(maximum, max, d.Σ)
+    isapprox(m, d.μ, atol = sqrt(Σmax/1_000_000)*10)
+
     @inferred ll(d, x)
 end

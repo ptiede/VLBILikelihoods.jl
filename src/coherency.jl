@@ -70,4 +70,14 @@ function Dists._rand!(rng::Random.AbstractRNG, d::CoherencyLikelihood, x::Struct
     return x
 end
 
+function Dists._rand!(rng::Random.AbstractRNG, d::CoherencyLikelihood, x::StructArray{<:SA.StaticMatrix{2,2}, N}) where {N}
+    map(eachslice(x, dims=Tuple(2:N))) do xx
+        Dists._rand!(rng, d, xx)
+    end
+    return x
+end
+
+
+
 Dists.rand(rng::Random.AbstractRNG, d::CoherencyLikelihood) = Dists._rand!(rng, d, similar(d.μ))
+ Dists.rand(rng::Random.AbstractRNG, d::CoherencyLikelihood, dims::Int...) = Dists._rand!(rng, d, similar(d.μ, eltype(d.μ), size(d.μ)..., dims...))
