@@ -71,8 +71,9 @@ function Dists._rand!(rng::Random.AbstractRNG, d::CoherencyLikelihood, x::Struct
 end
 
 function Dists._rand!(rng::Random.AbstractRNG, d::CoherencyLikelihood, x::StructArray{<:SA.StaticMatrix{2,2}, N}) where {N}
-    map(eachslice(x, dims=Tuple(2:N))) do xx
-        Dists._rand!(rng, d, xx)
+    Ind = CartesianIndices(size(x)[2:N])
+    for I in Ind
+        Dists._rand!(rng, d, @view(x[:, I]))
     end
     return x
 end
