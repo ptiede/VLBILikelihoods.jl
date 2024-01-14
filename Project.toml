@@ -1,7 +1,7 @@
 name = "VLBILikelihoods"
 uuid = "90db92cd-0007-4c0a-8e51-dbf0782ce592"
 authors = ["Paul Tiede <ptiede91@gmail.com> and contributors"]
-version = "0.2.1"
+version = "0.2.2"
 
 [deps]
 Bessels = "0e736298-9ec6-45e8-9647-e4fc86a2fe38"
@@ -20,7 +20,7 @@ SuiteSparse = "4607b0f0-06f3-5cda-b6b1-a6196a1729e9"
 [compat]
 Bessels = "0.2"
 ChainRulesCore = "1"
-ComradeBase = "0.5"
+ComradeBase = "0.5, 0.6"
 DensityInterface = "0.4"
 Distributions = "0.25"
 DocStringExtensions = "0.8, 0.9"
