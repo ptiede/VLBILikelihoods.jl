@@ -10,6 +10,7 @@ using LinearAlgebra
 using ChainRulesCore
 using Random
 using SparseArrays
+using Serialization
 using SuiteSparse
 using StructArrays
 using StaticArraysCore

@@ -24,3 +24,14 @@ function _color!(r, chol::CholeskyFactor{T, <:AbstractMatrix{T}, C}, x) where {T
     mul!(r, PtL, x)
     return r
 end
+
+function Serialization.serialize(s::Serialization.AbstractSerializer, c::CholeskyFactor)
+    Serialization.writetag(s.io, Serialization.OBJECT_TAG)
+    Serialization.serialize(s, typeof(c))
+    Serialization.serialize(s, c.cov)
+end
+
+function Serialization.deserialization(s::Serialization.AbstractSerializer, ::Type{<:CholeskyFactor})
+    cov = Serialization.deserialize(s)
+    return CholeskyFactor(cov)
+end
