@@ -29,6 +29,7 @@
 
     @test d.lognorm ≈ darr.lognorm
     @test logdensityof(d, x) ≈ logdensityof(darr, Array(x))
+    @inferred Float64 logdensityof(d, x)
 
     dRR_r = MvNormal(real.(μRR), Diagonal(ΣRR))
     dLL_r = MvNormal(real.(μLL), Diagonal(ΣLL))

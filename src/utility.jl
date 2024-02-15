@@ -1,27 +1,43 @@
 function _unnormed_logpdf_μΣ(μ, Σ, x)
-    s = zero(eltype(Σ))
-    z = zero(s)
-    for i in eachindex(μ, Σ)
-        # tmp = ifelse(!(isnan(x[i])&&isnan(Σ[i])), -abs2(x[i] - μ[i])*inv(Σ[i]), z)
-        tmp = ifelse(!(isnan(x[i]) || isnan(Σ[i])), -abs2(x[i] - μ[i])*inv(Σ[i]), z)
-        s += tmp
+    s = sum(zip(μ, Σ, x)) do (μs, Σs, xs)
+        z = zero(eltype(Σ))
+        tmp = ifelse(!(isnan(xs) || isnan(Σs)), -abs2(xs - μs)*inv(Σs), z)
+        return tmp
     end
+
+    # s = zero(eltype(Σ))
+    # z = zero(s)
+    # for i in eachindex(μ, Σ)
+    #     tmp = ifelse(!(isnan(x[i])&&isnan(Σ[i])), -abs2(x[i] - μ[i])*inv(Σ[i]), z)
+    #     s += tmp
+    # end
     return s/2
 end
 
 
+# function _gaussnorm(μ, Σ::AbstractVector)
+#     @assert length(μ) == length(Σ) "Mean and std. dev. vector are not the same length"
+#     n = length(μ)
+#     logw = -n/2*log2π - sum(log, filter!(!isnan, Σ))/2
+#     return logw
+# end
+
 function _gaussnorm(μ, Σ::AbstractVector)
     @assert length(μ) == length(Σ) "Mean and std. dev. vector are not the same length"
     n = length(μ)
-    logw = -n/2*log2π - sum(log, filter!(!isnan, Σ))/2
-    return logw
+    logw = -n*convert(eltype(Σ), log2π)/2
+    logs = sum(Σ) do s
+            return ifelse(!isnan(s), log(s), (zero(eltype(Σ))))
+    end
+    return logw - logs/2
 end
+
 
 function _gaussnorm(μ, Σ::CholeskyFactor)
     @assert length(μ) == size(Σ,1) "Mean and Cov vector are not the same dimension"
     n = length(μ)
     ldet = logdet(Σ)
-    return -n/2*log2π - ldet/2
+    return -n*convert(typeof(ldet), log2π)/2 - ldet/2
 end
 
 # These will be removed when https://github.com/JuliaStats/Distributions.jl/pull/1554
