@@ -56,6 +56,7 @@ using Serialization
 
         serialize("test.jls", c)
         c2 = deserialize("test.jls")
+        rm("test.jls")
         x = rand(size(c2, 1))
         @test c2.cov == c.cov
         @test c2\x == c\x
