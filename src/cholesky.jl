@@ -31,7 +31,7 @@ function Serialization.serialize(s::Serialization.AbstractSerializer, c::Cholesk
     Serialization.serialize(s, c.cov)
 end
 
-function Serialization.deserialization(s::Serialization.AbstractSerializer, ::Type{<:CholeskyFactor})
+function Serialization.deserialize(s::Serialization.AbstractSerializer, ::Type{<:CholeskyFactor})
     cov = Serialization.deserialize(s)
     return CholeskyFactor(cov)
 end
