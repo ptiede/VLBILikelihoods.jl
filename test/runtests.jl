@@ -9,6 +9,7 @@ using LinearAlgebra
 using FiniteDifferences
 using StructArrays
 using SparseArrays
+using Serialization
 
 @testset "VLBILikelihoods.jl" begin
 
@@ -52,6 +53,12 @@ using SparseArrays
         @test size(Σ) == size(c)
         @test getindex(Σ, 1, 1) == getindex(c, 1, 1)
         @test cholesky(c) === c
+
+        serialize("test.jls", c)
+        c2 = deserialize("test.jls")
+        x = rand(size(c2, 1))
+        @test c2.cov == c.cov
+        @test c2\x == c\x
     end
 
     include(joinpath(@__DIR__, "amplitude.jl"))
