@@ -1,5 +1,5 @@
 function _unnormed_logpdf_μΣ(μ, Σ, x)
-    s = sum(zip(μ, Σ, x)) do (μs, Σs, xs)
+    s = sum(zip(μ, Σ, x); init=zero(eltype(Σ))) do (μs, Σs, xs)
         z = zero(eltype(Σ))
         tmp = ifelse(!(isnan(xs) || isnan(Σs)), -abs2(xs - μs)*inv(Σs), z)
         return tmp
