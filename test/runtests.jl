@@ -10,6 +10,7 @@ using FiniteDifferences
 using StructArrays
 using SparseArrays
 using Serialization
+using ComradeBase
 
 @testset "VLBILikelihoods.jl" begin
 

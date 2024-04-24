@@ -31,6 +31,20 @@ function CoherencyLikelihood(μ::AbstractVector{<:SA.StaticMatrix{2,2}}, Σ::Abs
     return CoherencyLikelihood(StructArray(μ), StructArray(Σ))
 end
 
+function CoherencyLikelihood(μ::UnstructuredMap{<:SA.StaticMatrix{2,2}}, Σ::AbstractVector{<:SA.StaticMatrix{2,2}})
+    return CoherencyLikelihood(parent(μ), Σ)
+end
+
+function CoherencyLikelihood(μ::AbstractVector{<:SA.StaticMatrix{2,2}}, Σ::UnstructuredMap{<:SA.StaticMatrix{2,2}})
+    return CoherencyLikelihood(μ, parent(Σ))
+end
+
+function CoherencyLikelihood(μ::UnstructuredMap{<:SA.StaticMatrix{2,2}}, Σ::UnstructuredMap{<:SA.StaticMatrix{2,2}})
+    return CoherencyLikelihood(parent(μ), parent(Σ))
+end
+
+
+
 function CoherencyLikelihood(μ::StructVector{<:SA.StaticMatrix{2,2}}, Σ::StructVector{<:SA.StaticMatrix{2,2}})
     lognorm = _coherencynorm(μ, Σ)
     return CoherencyLikelihood(μ, Σ, lognorm)

@@ -18,11 +18,23 @@
     ΣLL = rand(Float64, 10) .+ 3.0
 
     μ = StructVector(SMatrix{2,2}.(μRR, μLR, μRL, μLL))
+    g = UnstructuredDomain((U=randn(10), V=randn(10)))
+    μs = UnstructuredMap(μ, g)
     x = StructVector(SMatrix{2,2}.(xRR, xLR, xRL, xLL))
     Σ = StructVector(SMatrix{2,2}.(ΣRR, ΣLR, ΣRL, ΣLL))
-
+    Σs= UnstructuredMap(Σ, g)
     d = CoherencyLikelihood(μ, Σ)
+    ds1 = CoherencyLikelihood(μs, Σ)
+    d1s = CoherencyLikelihood(μ, Σs)
+    dss = CoherencyLikelihood(μs, Σs)
     darr = CoherencyLikelihood(Array(μ), Array(Σ))
+
+    @test typeof(ds1.μ) == typeof(d.μ)
+    @test typeof(d1s.μ) == typeof(d.μ)
+    @test typeof(dss.μ) == typeof(d.μ)
+    @test typeof(ds1.Σ) == typeof(d.Σ)
+    @test typeof(d1s.Σ) == typeof(d.Σ)
+    @test typeof(dss.Σ) == typeof(d.Σ)
 
     @test eltype(d) == eltype(μ)
     @test length(d) == length(μ)
