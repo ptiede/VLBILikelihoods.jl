@@ -57,8 +57,7 @@ function _coherencynorm(μ::StructVector, Σ::StructVector)
     sum(_cvisnorm.(μs, Σs))
 end
 
-
-
+unnormed_logpdf(d::CoherencyLikelihood, x::UnstructuredMap) = unnormed_logpdf(d, baseimage(x))
 function unnormed_logpdf(d::CoherencyLikelihood{<:StructVector{<:SA.StaticMatrix{2,2}}, <:StructVector{<:SA.StaticMatrix{2,2}}},
                          x::StructVector{<:SA.StaticMatrix{2,2}})
     μs = values(StructArrays.components(d.μ))
@@ -95,4 +94,4 @@ end
 
 
 Dists.rand(rng::Random.AbstractRNG, d::CoherencyLikelihood) = Dists._rand!(rng, d, similar(d.μ))
- Dists.rand(rng::Random.AbstractRNG, d::CoherencyLikelihood, dims::Int...) = Dists._rand!(rng, d, similar(d.μ, eltype(d.μ), size(d.μ)..., dims...))
+Dists.rand(rng::Random.AbstractRNG, d::CoherencyLikelihood, dims::Int...) = Dists._rand!(rng, d, similar(d.μ, eltype(d.μ), size(d.μ)..., dims...))
