@@ -12,6 +12,16 @@ using SparseArrays
 using Serialization
 using ComradeBase
 
+function moment_test(d, nsamples=200_000, 5e-2)
+    # c = cov(d)
+    s = reduce(hcat, reshape.(rand(d, nsamples), :))
+    cs = cov(s; dims=2)
+    ms = reshape(mean(s; dims=2), size(d))
+    @test isapprox(c, cs; atol)
+    @test isapprox(mean(d), ms; atol)
+
+end
+
 @testset "VLBILikelihoods.jl" begin
 
     @testset "utility test" begin

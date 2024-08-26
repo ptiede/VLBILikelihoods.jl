@@ -40,7 +40,7 @@ function unnormed_logpdf(d::ComplexVisLikelihood, x::AbstractVector{<:Complex})
 end
 
 function Dists._rand!(rng::Random.AbstractRNG, d::ComplexVisLikelihood, x::AbstractArray{<:Complex})
-    randn!(rng, x).*sqrt.(d.Σ)
+    x .= randn!(rng, x).*sqrt.(d.Σ)
     x .+= d.μ
     return x
 end
