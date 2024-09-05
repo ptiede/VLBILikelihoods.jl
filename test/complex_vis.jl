@@ -31,7 +31,7 @@
     @test logdensityof(d, x) ≈ logpdf(dR, xR) + logpdf(dI, xI)
 
 
-    moment_test(d, 200_000, 5e-2)
+    lklhd_moment_test(d, 200_000, 5e-2)
 
     f(x, μ, Σ) = logdensityof(ComplexVisLikelihood(μ, Σ), x)
     # @inferred Zygote.gradient(f, x, μ, Σ)
