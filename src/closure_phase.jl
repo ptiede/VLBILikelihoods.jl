@@ -23,14 +23,13 @@ distribution[^1].
          Note that `Σ` can either be a matrix or a vector. If `Σ` is a vector then we interpret
          `Σ` to represent the diagonal of the covariance matrix.
 
-# Warning
-
-Note that for the dense Σ, the likelihood is not normalized properly since the normalization
-is not analytically tractable. This is not a problem for sampling since the normalizing constant
-does not depend on `μ` so it does not *usually* impact parameter estimation. However, if you are
-including terms that modify the covariance `Σ` then this likelihood is wrong and could give
-biased results. If you want to fit noise terms in Σ please either use the diagonal approximation
-to the likelihood, or **better yet** fit complex visibilities directly.
+!!! warning
+    Note that for the dense Σ, the likelihood is not normalized properly since the normalization
+    is not analytically tractable. This is not a problem for sampling since the normalizing constant
+    does not depend on `μ` so it does not *usually* impact parameter estimation. However, if you are
+    including terms that modify the covariance `Σ` then this likelihood is wrong and could give
+    biased results. If you want to fit noise terms in Σ please either use the diagonal approximation
+    to the likelihood, or **better yet** fit complex visibilities directly.
 
 
 [^1]: This distribution is defined on the n torus where n is the number of closure phases.

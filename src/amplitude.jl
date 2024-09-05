@@ -18,15 +18,10 @@ the covariance matrix `Σ`. If Σ is vector or a diagonal
 matrix then we assume that the argument is the diagonal covariance matrix.
 If Σ is a full matrix then we assume that a dense covariance was passed
 
-# Notes
-
-We do no processing to the data, i.e. the mean μ is not-debiased anywhere.
-
-# Warning
-
-This likelihood will be significantly biased from the true Rice distribution
-for data points with SNR = μ/Σ < 2. If this matter significantly for you, we recommend
-that you consider fitting pure complex visibilities instead.
+!!! warning
+    We do no processing to the data, i.e. the mean μ is not-debiased anywhere.
+    This likelihood will be significantly biased from the true Rice distribution
+    for data points with SNR = μ/Σ < 2. For low SNR data use `RiceAmplitudeLikelihood`
 """
 function AmplitudeLikelihood(μ::AbstractVector, Σ::AbstractVector)
     lognorm = _gaussnorm(μ, Σ)
@@ -96,9 +91,10 @@ Forms the likelihood for amplitudes from the mean vector `μ` and
 the diagonal covariance matrix `Σ`. `Σ` can either be a Diagonal matrix or
 a vector whose entries are the variance for each data point.
 
-# Notes
-This is the correct likelihood distribution for visibility amplitudes, but it is slower
-than the Gaussian approximation `AmplitudeLikelihood`. Additionally, i
+!!! note
+    This is the correct likelihood distribution for visibility amplitudes, but it is slower
+    than the Gaussian approximation `AmplitudeLikelihood`. However for low SNR data it is
+    required to get unbiased results.
 """
 function RiceAmplitudeLikelihood(μ::AbstractVector, Σ::AbstractVector)
     lognorm = -sum(log, Σ)

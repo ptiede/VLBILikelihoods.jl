@@ -33,13 +33,19 @@ is that by default we expect on the fields of the `struct` defining the distribu
 This prevents the model from constantly having to compute the log-normalization constant
 everytime the density is evaluated, which is often the most expensive part of the computation.
 
-To implement a `AbstractVLBIDistributions` a user then just needs to implement
+To implement a `AbstractVLBIDistributions` a user then just needs to define
   - `unormed_logdensity(d::AbstractVLBIDistribution, x)`
 which takes in the new distribution type `d` and the point you wish to evaluate the density at.
-Internally `VLBILikelihood` add in the normalization constant.
+Internally `VLBILikelihood` adds in the normalization constant.
 
-Additionally, if the user wishes to change this behavior they can also overload the `lognorm`
-function to opt-out of storing the normalization constant in the `struct`.
+If the user wishes to change the default lognorm behavior they can also overload the `lognorm`
+function to opt-out of storing the normalization constant in the `struct`. For example
+
+struct MyNormal <: AbstractVLBIDistributions end
+
+unnormed_logdensity(d::MyNormal, x) = -x^2/2
+lognorm(d::MyNormal) = -log(2π)/2
+
 """
 abstract type AbstractVLBIDistributions <:  Dists.ContinuousMultivariateDistribution end
 

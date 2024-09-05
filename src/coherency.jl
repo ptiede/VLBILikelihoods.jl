@@ -12,10 +12,8 @@ Creates the coherency matrix likelihood distribution which is a Gaussian over th
 - `Σ`: The measurement covariance matrix, which is usually computed directly from the data.
        Note that `Σ` must vector of 2x2 real static matrices.
 
-# Notes
-
-You will get the best performance is all the vectors are given as StructVectors{<:StaticMatrices{2,2}}, especially
-when computing gradients with an AD engine like Zygote.
+!!! notes
+    You will get the best performance is all the vectors are given as StructVectors{<:StaticMatrices{2,2}}.
 """
 struct CoherencyLikelihood{V1,V2,W} <: AbstractVLBIDistributions
     μ::V1
