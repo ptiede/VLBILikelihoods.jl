@@ -12,7 +12,7 @@ using SparseArrays
 using Serialization
 using ComradeBase
 
-function moment_test(d, nsamples=200_000, 5e-2)
+function moment_test(d, nsamples=200_000, atol=5e-2)
     # c = cov(d)
     s = reduce(hcat, reshape.(rand(d, nsamples), :))
     cs = cov(s; dims=2)
