@@ -70,8 +70,16 @@
 
     s = rand(d, 1_000_000)
     m = mean(s, dims=2)
+    v1 = var(s.:1, dims=2)
+    v2 = var(s.:2, dims=2)
+    v3 = var(s.:3, dims=2)
+    v4 = var(s.:4, dims=2)
     Σmax = mapreduce(maximum, max, d.Σ)
-    isapprox(m, d.μ, atol = sqrt(Σmax/1_000_000)*10)
+    @test isapprox(m, d.μ, atol = 5e-2)
+    @test isapprox(v1, d.Σ.:1, atol = 5e-2)
+    @test isapprox(v2, d.Σ.:2, atol = 5e-2)
+    @test isapprox(v3, d.Σ.:3, atol = 5e-2)
+    @test isapprox(v4, d.Σ.:4, atol = 5e-2)
 
     @inferred ll(d, x)
 end

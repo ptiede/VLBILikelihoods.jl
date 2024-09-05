@@ -159,6 +159,7 @@ function Dists.var(d::RiceAmplitudeLikelihood)
     T = eltype(d)
     return 2*d.Σ .+ d.μ.^2 - (T(π).*d.Σ/2).*_L12.(-d.μ.^2 .* inv.(2*d.Σ)).^2
 end
+Dists.cov(d::RiceAmplitudeLikelihood) = Diagonal(Dists.var(d))
 
 
 function Distributions._rand!(rng::Random.AbstractRNG, d::RiceAmplitudeLikelihood{<:AbstractVector, <:AbstractVector}, x::AbstractVector)

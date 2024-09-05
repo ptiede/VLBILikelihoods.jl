@@ -26,6 +26,8 @@ end
 Base.length(d::CoherencyLikelihood) = length(d.μ)
 Base.eltype(d::CoherencyLikelihood) = eltype(d.μ)
 Dists.insupport(d::CoherencyLikelihood, x) = true
+Dists.mean(d::CoherencyLikelihood) = d.μ
+Dists.var(d::CoherencyLikelihood) = d.Σ
 
 function CoherencyLikelihood(μ::AbstractVector{<:SA.StaticMatrix{2,2}}, Σ::AbstractVector{<:SA.StaticMatrix{2,2}})
     return CoherencyLikelihood(StructArray(μ), StructArray(Σ))
@@ -42,6 +44,7 @@ end
 function CoherencyLikelihood(μ::UnstructuredMap{<:SA.StaticMatrix{2,2}}, Σ::UnstructuredMap{<:SA.StaticMatrix{2,2}})
     return CoherencyLikelihood(parent(μ), parent(Σ))
 end
+
 
 
 

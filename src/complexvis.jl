@@ -21,6 +21,10 @@ end
 Base.length(d::ComplexVisLikelihood) = length(d.μ)
 Base.eltype(d::ComplexVisLikelihood) = eltype(d.μ)
 Dists.insupport(d::ComplexVisLikelihood, x) = true
+Dists.mean(d::ComplexVisLikelihood) = d.μ
+Dists.var(d::ComplexVisLikelihood) = d.Σ
+Dists.cov(d::ComplexVisLikelihood) = Diagonal(Dists.var(d))
+
 
 function ComplexVisLikelihood(μ::AbstractVector{<:Complex}, Σ::AbstractVector{<:Real})
     lognorm = _cvisnorm(μ, Σ)
