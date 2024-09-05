@@ -22,7 +22,7 @@ function moment_test(d, nsamples=200_000, atol=5e-2)
 
 end
 
-function lklhd_moment_test(d, nsamples=200_000, atol=5e-2)
+function lklhd_moment_test(d, nsamples=1_000_000, atol=5e-2)
     # c = cov(d)
     s = rand(d, nsamples)
     cs = vec(var(s; dims=2))
