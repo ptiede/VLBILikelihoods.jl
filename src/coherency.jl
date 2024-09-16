@@ -64,8 +64,11 @@ function unnormed_logpdf(d::CoherencyLikelihood{<:StructVector{<:SA.StaticMatrix
     μs = values(StructArrays.components(d.μ))
     Σs = values(StructArrays.components(d.Σ))
     xs = values(StructArrays.components(x))
-    s = sum(_unnormed_logpdf_μΣ.(μs, Σs, xs))
-    return s
+    s1 = _unnormed_logpdf_μΣ(μs[1], Σs[1], xs[1])
+    s2 = _unnormed_logpdf_μΣ(μs[2], Σs[2], xs[2])
+    s3 = _unnormed_logpdf_μΣ(μs[3], Σs[3], xs[3])
+    s4 = _unnormed_logpdf_μΣ(μs[4], Σs[4], xs[4])
+    return s1+s2+s3+s4
 end
 
 function unnormed_logpdf(d::CoherencyLikelihood{<:StructVector{<:SA.StaticMatrix{2,2}}, <:StructVector{<:SA.StaticMatrix{2,2}}},
