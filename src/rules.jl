@@ -154,6 +154,8 @@ end
 
 EnzymeRules.inactive_type(::Type{<:CholeskyFactor}) = true
 
+
+## We add this untile Enzyme fixes this issue upstream
 function EnzymeRules.augmented_primal(config::EnzymeRules.RevConfig, func::Const{typeof(\)}, ::Type{RT}, 
                                       c::Annotation{<:CholeskyFactor}, v::Annotation{<:AbstractArray}) where {RT}
 
