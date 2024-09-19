@@ -88,6 +88,7 @@ end
     include(joinpath(@__DIR__, "closure_phase.jl"))
     include(joinpath(@__DIR__, "complex_vis.jl"))
     include(joinpath(@__DIR__, "coherency.jl"))
+    include(joinpath(@__DIR__, "rules.jl"))
 
 
 
