@@ -1,15 +1,22 @@
-function _unnormed_logpdf_μΣ(μ, Σ, x)
+@noinline function _unnormed_logpdf_μΣ(μ, Σ, x)
+    z = zero(eltype(Σ))
     s = sum(zip(μ, Σ, x); init=zero(eltype(Σ))) do (μs, Σs, xs)
-        z = zero(eltype(Σ))
-        tmp = ifelse(!(isnan(xs) || isnan(Σs)), -abs2(xs - μs)*inv(Σs), z)
-        return tmp
-    end
+            if isnan(xs) || isnan(Σs)
+                return z
+            end
+            return -abs2(xs - μs)/Σs
+        end
 
     # s = zero(eltype(Σ))
     # z = zero(s)
     # for i in eachindex(μ, Σ)
-    #     tmp = ifelse(!(isnan(x[i])&&isnan(Σ[i])), -abs2(x[i] - μ[i])*inv(Σ[i]), z)
-    #     s += tmp
+    #     if isnan(x[i]) || isnan(Σ[i])
+    #         continue
+    #     else 
+    #         s += -abs2(x[i] - μ[i])*inv(Σ[i])
+    #     end
+    #     # tmp = ifelse(!(isnan(x[i]) || isnan(Σ[i])), -abs2(x[i] - μ[i])*inv(Σ[i]), z)
+    #     # s += tmp
     # end
     return s/2
 end

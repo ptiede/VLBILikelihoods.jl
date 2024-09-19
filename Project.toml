@@ -1,7 +1,7 @@
 name = "VLBILikelihoods"
 uuid = "90db92cd-0007-4c0a-8e51-dbf0782ce592"
 authors = ["Paul Tiede <ptiede91@gmail.com> and contributors"]
-version = "0.2.5"
+version = "0.2.6"
 
 [deps]
 Bessels = "0e736298-9ec6-45e8-9647-e4fc86a2fe38"
