@@ -156,7 +156,7 @@ EnzymeRules.inactive_type(::Type{<:CholeskyFactor}) = true
 
 
 ## We add this untile Enzyme fixes this issue upstream
-function EnzymeRules.augmented_primal(config::EnzymeRules.RevConfig, func::Const{typeof(\)}, ::Type{RT}, 
+function EnzymeRules.augmented_primal(config::EnzymeRules.ConfigWidth, func::Const{typeof(\)}, ::Type{RT}, 
                                       c::Annotation{<:CholeskyFactor}, v::Annotation{<:AbstractArray}) where {RT}
 
     if !(typeof(c) <: Const)
@@ -221,7 +221,7 @@ function EnzymeRules.augmented_primal(config::EnzymeRules.RevConfig, func::Const
     }(retres, dres, cache)
 end
 
-function EnzymeRules.reverse(config::EnzymeRules.RevConfig, func::Const{typeof(\)}, ::Type{RT}, cache, 
+function EnzymeRules.reverse(config::EnzymeRules.ConfigWidth, func::Const{typeof(\)}, ::Type{RT}, cache, 
                              c::Annotation{<:CholeskyFactor}, v::Annotation{<:AbstractArray}) where {RT}
 
     res, dres, cache_c, cache_v = cache
