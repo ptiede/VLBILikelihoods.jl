@@ -9,7 +9,7 @@
     Σ = 2*rand(Float32, 100) .+ 1f0
     d32 = ComplexVisLikelihood(μ, Σ)
 
-    @inferred Float32 logdensityof(d, μ)
+    @inferred Float32 logdensityof(d32, μ)
 
 
     μR = rand(100)
