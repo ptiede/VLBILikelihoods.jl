@@ -4,7 +4,7 @@ using ComradeBase
 using DocStringExtensions
 using Bessels
 using EnzymeCore
-using EnzymeCore: EnzymeRules
+using EnzymeCore: EnzymeRules, Annotation
 using DensityInterface
 using Distributions
 const Dists = Distributions
