@@ -18,7 +18,7 @@
     xR = rand(100)
     xI = rand(100)
 
-    Σ = 0.5rand(100)
+    Σ = 0.5.*rand(100) .+ 1.0
 
     d = ComplexVisLikelihood(μ, Σ)
     x = rand(d)

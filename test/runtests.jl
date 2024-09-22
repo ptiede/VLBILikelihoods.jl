@@ -75,6 +75,7 @@ end
         @test size(Σ) == size(c)
         @test getindex(Σ, 1, 1) == getindex(c, 1, 1)
         @test cholesky(c) === c
+        @test adjoint(c) isa VLBILikelihoods.CholeskyFactor
 
         serialize("test.jls", c)
         c2 = deserialize("test.jls")
