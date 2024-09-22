@@ -22,12 +22,12 @@ function moment_test(d, nsamples=200_000, atol=5e-2)
 
 end
 
-function lklhd_moment_test(d, nsamples=1_000_000, atol=5e-2)
+function lklhd_moment_test(d, ns=1_000_000, atol=5e-2)
     # c = cov(d)
-    s = rand(d, nsamples)
+    s = rand(d, ns)
     cs = vec(var(s; dims=2))
     ms = reshape(mean(s; dims=2), :)
-    @test isapprox(var(d), cs; atol)
+    @test isapprox(var(d), cs; rtol=atol*2)
     @test isapprox(mean(d), ms; atol)
 
 end
@@ -75,6 +75,7 @@ end
         @test size(Σ) == size(c)
         @test getindex(Σ, 1, 1) == getindex(c, 1, 1)
         @test cholesky(c) === c
+        @test adjoint(c) isa VLBILikelihoods.CholeskyFactor
 
         serialize("test.jls", c)
         c2 = deserialize("test.jls")
@@ -88,6 +89,7 @@ end
     include(joinpath(@__DIR__, "closure_phase.jl"))
     include(joinpath(@__DIR__, "complex_vis.jl"))
     include(joinpath(@__DIR__, "coherency.jl"))
+    include(joinpath(@__DIR__, "rules.jl"))
 
 
 

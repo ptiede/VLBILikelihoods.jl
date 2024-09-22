@@ -9,6 +9,7 @@ Base.getindex(m::CholeskyFactor, i::Int) = getindex(parent(m), i)
 Base.getindex(m::CholeskyFactor, I::Vararg{Int, 2}) = getindex(parent(m), I...)
 Base.IndexStyle(::Type{<:CholeskyFactor{T,M}}) where {T,M} = IndexStyle(M)
 LinearAlgebra.cholesky(m::CholeskyFactor) = m
+Base.adjoint(m::CholeskyFactor) = CholeskyFactor(m.cov, adjoint(m.cho))
 
 Base.:\(c::CholeskyFactor, v::AbstractVector) = c.cho\v
 
