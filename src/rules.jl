@@ -214,11 +214,12 @@ function EnzymeRules.augmented_primal(config::EnzymeRules.ConfigWidth, func::Con
         (cache_res, dres, cache_c, cache_v)
     )
 
-    return EnzymeRules.AugmentedReturn{
-        EnzymeRules.primal_type(config, RT),
-        EnzymeRules.shadow_type(config, RT),
-        typeof(cache)
-    }(retres, dres, cache)
+    # return EnzymeRules.AugmentedReturn{
+    #     EnzymeRules.primal_type(config, RT),
+    #     EnzymeRules.shadow_type(config, RT),
+    #     typeof(cache)
+    # }(retres, dres, cache)
+    return AugmentedReturn(retres, dres, cache)
 end
 
 function EnzymeRules.reverse(config::EnzymeRules.ConfigWidth, func::Const{typeof(\)}, ::Type{RT}, cache, 
