@@ -6,8 +6,8 @@
     xR = rand(Float32, 100)
     xI = rand(Float32, 100)
 
-    Σ = 2*rand(Float32, 100) .+ 1.0
-    d = ComplexVisLikelihood(μ, Σ)
+    Σ = 2*rand(Float32, 100) .+ 1f0
+    d32 = ComplexVisLikelihood(μ, Σ)
 
     @inferred Float32 logdensityof(d, μ)
 
@@ -18,7 +18,7 @@
     xR = rand(100)
     xI = rand(100)
 
-    Σ = 2*rand(100) .+ 1.0
+    Σ = 0.5rand(100)
 
     d = ComplexVisLikelihood(μ, Σ)
     x = rand(d)
@@ -31,7 +31,7 @@
     @test logdensityof(d, x) ≈ logpdf(dR, xR) + logpdf(dI, xI)
 
 
-    lklhd_moment_test(d, 200_000, 5e-2)
+    lklhd_moment_test(d, 1_000_000, 5e-2)
 
     f(x, μ, Σ) = logdensityof(ComplexVisLikelihood(μ, Σ), x)
     # @inferred Zygote.gradient(f, x, μ, Σ)
