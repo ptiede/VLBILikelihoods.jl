@@ -164,7 +164,7 @@ function EnzymeRules.augmented_primal(config::EnzymeRules.RevConfig, func::Const
     end
 
     cache_c = if EnzymeRules.overwritten(config)[2]
-        copy(c.val)
+        c.val
     else
         c.val
     end
