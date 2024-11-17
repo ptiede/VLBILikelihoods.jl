@@ -29,7 +29,7 @@ DocStringExtensions = "0.8, 0.9"
 EnzymeCore = "0.8"
 Serialization = "1.7"
 StaticArraysCore = "1"
-StructArrays = "0.6"
+StructArrays = "0.6, 0.7"
 julia = "1.10"
 
 [extras]
