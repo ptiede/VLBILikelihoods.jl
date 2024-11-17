@@ -9,7 +9,11 @@
 
     # s = zero(eltype(Σ))
     # z = zero(s)
-    # for i in eachindex(μ, Σ)
+    # for i in eachindex(x, μ, Σ)
+    #     if isnan(μ[i])
+    #         return NaN #short circuit because this should never happen
+    #     end
+
     #     if isnan(x[i]) || isnan(Σ[i])
     #         continue
     #     else 
