@@ -22,7 +22,7 @@ SuiteSparse = "4607b0f0-06f3-5cda-b6b1-a6196a1729e9"
 [compat]
 Bessels = "0.2"
 ChainRulesCore = "1"
-ComradeBase = "0.7, 0.8"
+ComradeBase = "0.7, 0.8, 0.9"
 DensityInterface = "0.4"
 Distributions = "0.25"
 DocStringExtensions = "0.8, 0.9"
