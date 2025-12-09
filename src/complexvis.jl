@@ -12,7 +12,7 @@ with strictly real covariance matrix.
        Note that `Σ` must be a real element vector and is interpreted at the diagonal of the
        covariance matrix.
 """
-struct ComplexVisLikelihood{V1<:AbstractArray{<:Complex},V2,W} <: AbstractVLBIDistributions
+struct ComplexVisLikelihood{V1,V2,W} <: AbstractVLBIDistributions
     μ::V1
     Σ::V2
     lognorm::W
@@ -26,7 +26,7 @@ Dists.var(d::ComplexVisLikelihood) = d.Σ
 Dists.cov(d::ComplexVisLikelihood) = Diagonal(Dists.var(d))
 
 
-function ComplexVisLikelihood(μ::AbstractVector{<:Complex}, Σ::AbstractVector{<:Real})
+function ComplexVisLikelihood(μ::AbstractVector, Σ::AbstractVector)
     lognorm = _cvisnorm(μ, Σ)
     return ComplexVisLikelihood(μ, Σ, lognorm)
 end
@@ -39,11 +39,11 @@ function _cvisnorm(μ, Σ)
 end
 
 
-function unnormed_logpdf(d::ComplexVisLikelihood, x::AbstractVector{<:Complex})
+function unnormed_logpdf(d::ComplexVisLikelihood, x::AbstractVector)
     return _unnormed_logpdf_μΣ(d.μ, d.Σ, x)
 end
 
-function Dists._rand!(rng::Random.AbstractRNG, d::ComplexVisLikelihood, x::AbstractArray{<:Complex})
+function Dists._rand!(rng::Random.AbstractRNG, d::ComplexVisLikelihood, x::AbstractArray)
     x .= randn!(rng, x).*sqrt.(d.Σ)
     x .+= d.μ
     return x
