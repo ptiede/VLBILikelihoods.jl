@@ -21,7 +21,8 @@ function _gaussnorm(μ, Σ::AbstractVector)
     n = length(μ)
     logw = -n*convert(eltype(Σ), log2π)/2
     logs = sum(Σ) do s
-            return ifelse(!isnan(s), log(s), (zero(eltype(Σ))))
+            sl = log(s)
+            return ifelse(!isnan(s), sl, (zero(eltype(Σ))))
     end
     return logw - logs/2
 end

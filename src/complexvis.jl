@@ -33,7 +33,6 @@ end
 
 function _cvisnorm(μ, Σ)
     @assert length(μ) == length(Σ) "Mean and std. dev. vector are not the same length"
-    n = length(μ)
     # 2x the amplitude version because of real and imag components
     return 2*_gaussnorm(μ, Σ)
 end
