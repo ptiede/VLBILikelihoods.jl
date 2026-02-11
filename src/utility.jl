@@ -1,28 +1,11 @@
-@noinline function _unnormed_logpdf_μΣ(μ, Σ, x)
-    z = zero(eltype(Σ))
+function _unnormed_logpdf_μΣ(μ, Σ, x)
     s = sum(zip(μ, Σ, x); init=zero(eltype(Σ))) do (μs, Σs, xs)
-            if isnan(xs) || isnan(Σs)
-                return z
-            end
-            return -abs2(xs - μs)/Σs
+            # Always compute l because this does better on GPU than branching here
+            l = abs2(xs - μs)/Σs
+            return ifelse(!isnan(l), l, zero(l))
         end
 
-    # s = zero(eltype(Σ))
-    # z = zero(s)
-    # for i in eachindex(x, μ, Σ)
-    #     if isnan(μ[i])
-    #         return NaN #short circuit because this should never happen
-    #     end
-
-    #     if isnan(x[i]) || isnan(Σ[i])
-    #         continue
-    #     else 
-    #         s += -abs2(x[i] - μ[i])*inv(Σ[i])
-    #     end
-    #     # tmp = ifelse(!(isnan(x[i]) || isnan(Σ[i])), -abs2(x[i] - μ[i])*inv(Σ[i]), z)
-    #     # s += tmp
-    # end
-    return s/2
+    return -s/2
 end
 
 
@@ -38,7 +21,8 @@ function _gaussnorm(μ, Σ::AbstractVector)
     n = length(μ)
     logw = -n*convert(eltype(Σ), log2π)/2
     logs = sum(Σ) do s
-            return ifelse(!isnan(s), log(s), (zero(eltype(Σ))))
+            sl = log(s)
+            return ifelse(!isnan(s), sl, (zero(eltype(Σ))))
     end
     return logw - logs/2
 end
