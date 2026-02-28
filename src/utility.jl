@@ -2,7 +2,7 @@ function _unnormed_logpdf_μΣ(μ, Σ, x)
     s = sum(zip(μ, Σ, x); init=zero(eltype(Σ))) do (μs, Σs, xs)
             # Always compute l because this does better on GPU than branching here
             l = abs2(xs - μs)/Σs
-            return ifelse(!isnan(l), l, zero(l))
+            return ifelse(isfinite(l), l, zero(l))
         end
 
     return -s/2
@@ -22,7 +22,7 @@ function _gaussnorm(μ, Σ::AbstractVector)
     logw = -n*convert(eltype(Σ), log2π)/2
     logs = sum(Σ) do s
             sl = log(s)
-            return ifelse(!isnan(s), sl, (zero(eltype(Σ))))
+            return ifelse(isfinite(sl), sl, (zero(eltype(Σ))))
     end
     return logw - logs/2
 end
