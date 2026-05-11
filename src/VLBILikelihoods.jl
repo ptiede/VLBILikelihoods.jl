@@ -11,6 +11,7 @@ const Dists = Distributions
 using LinearAlgebra
 using ChainRulesCore
 using Random
+using ReactantCore: @trace
 using SparseArrays
 using Serialization
 using SuiteSparse
