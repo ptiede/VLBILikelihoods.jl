@@ -1,12 +1,8 @@
 function _unnormed_logpdf_μΣ(μ, Σ, x)
     s = sum(zip(μ, Σ, x); init=zero(eltype(Σ))) do (μs, Σs, xs)
             # Always compute l because this does better on GPU than branching here
-            @trace if isfinite(Σs) & isfinite(μs)
-                l = abs2(xs - μs)/Σs
-            else
-                l = zero(typeof(Σs))
-            end
-            return l
+            l = abs2(xs - μs)* inv(Σs)
+            return ifelse(isfinite(l), l, zero(typeof(l)))
         end
 
     return -s/2
@@ -25,12 +21,8 @@ function _gaussnorm(μ, Σ::AbstractVector)
     n = length(μ)
     logw = -n*convert(eltype(Σ), log2π)/2
     logs = sum(Σ) do s
-            @trace if isfinite(s)
-                sl = log(s)
-            else
-                sl = zero(typeof(s))
-            end
-            return sl
+        l = log(s)
+        return ifelse(isfinite(l), l, zero(typeof(l)))
     end
     return logw - logs/2
 end
