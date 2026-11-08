@@ -10,10 +10,13 @@ function _checkdata(μ, x)
     return nothing
 end
 
+# The real type of a sum over terms combining `μ`, `w` and `x`, so the accumulator keeps one type.
+_sumtype(μ, w, x) = float(real(promote_type(eltype(μ), eltype(w), eltype(x))))
+
 # `½ Σ w |x - μ|²`. A value of weight 0 contributes nothing, so its data must be finite.
 function _weightedchi2(μ, w, x)
     _checkdata(μ, x)
-    s = sum(zip(μ, w, x); init = zero(real(eltype(w)))) do (m, wi, xi)
+    s = sum(zip(μ, w, x); init = zero(_sumtype(μ, w, x))) do (m, wi, xi)
         return wi * abs2(xi - m)
     end
     return s / 2

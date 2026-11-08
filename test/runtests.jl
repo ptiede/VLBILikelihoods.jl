@@ -42,6 +42,14 @@ randpd(n) = (m = sprand(n, n, 0.05); 0.5 .* (m + m') + 5 .* Diagonal(ones(n)))
         @test c2 \ x == c \ x
     end
 
+    @testset "Float32 data with a Float64 mean" begin
+        μ, w = complex.(rand(4), rand(4)), Float32.(fill(4.0, 4))
+        x = ComplexF32.(μ .+ 0.1)
+        @test @inferred(VLBILikelihoods.unnormed_logpdf(ComplexVisLikelihood(μ, w), x)) isa Float64
+        @test @inferred(VLBILikelihoods.unnormed_logpdf(ClosurePhaseLikelihood(rand(4), w), Float32.(rand(4)))) isa Float64
+        @test @inferred(VLBILikelihoods.unnormed_logpdf(RiceAmplitudeLikelihood(1 .+ rand(4), w), Float32.(1 .+ rand(4)))) isa Float64
+        check_gradient(m -> logdensityof(ComplexVisLikelihood(complex.(m, m), w), x), rand(4))
+    end
     include(joinpath(@__DIR__, "amplitude.jl"))
     include(joinpath(@__DIR__, "closure_phase.jl"))
     include(joinpath(@__DIR__, "complex_vis.jl"))

@@ -93,7 +93,7 @@ _L12(x) = exp(x / 2) * ((1 - x) * besseli0(-x / 2) - x * besseli1(-x / 2))
 
 function unnormed_logpdf(d::RiceAmplitudeLikelihood, x::AbstractArray)
     _checkdata(d.μ, x)
-    return sum(zip(d.μ, d.w, x); init = zero(float(real(eltype(d.w))))) do (μ, w, xx)
+    return sum(zip(d.μ, d.w, x); init = zero(_sumtype(d.μ, d.w, x))) do (μ, w, xx)
         measured = w > 0
         # an unmeasured value is evaluated at x = 1 and dropped, so no log(0) reaches the gradient
         l = lpdf_rice(ifelse(measured, xx, one(xx)), μ, w)

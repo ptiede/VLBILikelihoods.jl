@@ -61,7 +61,7 @@ end
 
 function unnormed_logpdf(d::ClosurePhaseLikelihood, x::AbstractArray)
     _checkdata(d.μ, x)
-    return sum(zip(d.μ, d.w, x); init = zero(float(real(eltype(d.w))))) do (μ, w, xx)
+    return sum(zip(d.μ, d.w, x); init = zero(_sumtype(d.μ, d.w, x))) do (μ, w, xx)
         return (cos(xx - μ) - 1) * w
     end
 end
