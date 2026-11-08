@@ -1,12 +1,10 @@
 name = "VLBILikelihoods"
 uuid = "90db92cd-0007-4c0a-8e51-dbf0782ce592"
 authors = ["Paul Tiede <ptiede91@gmail.com> and contributors"]
-version = "0.3.0"
+version = "0.4.0"
 
 [deps]
 Bessels = "0e736298-9ec6-45e8-9647-e4fc86a2fe38"
-ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
-ComradeBase = "6d8c423b-a35f-4ef1-850c-862fe21f82c4"
 DensityInterface = "b429d917-457f-4dbc-8f4c-0cc954292b1d"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
@@ -22,8 +20,6 @@ SuiteSparse = "4607b0f0-06f3-5cda-b6b1-a6196a1729e9"
 
 [compat]
 Bessels = "0.2"
-ChainRulesCore = "1"
-ComradeBase = "0.7, 0.8, 0.9"
 DensityInterface = "0.4"
 Distributions = "0.25"
 DocStringExtensions = "0.8, 0.9"

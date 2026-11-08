@@ -1,6 +1,5 @@
 module VLBILikelihoods
 
-using ComradeBase
 using DocStringExtensions
 using Bessels
 using EnzymeCore
@@ -9,7 +8,6 @@ using DensityInterface
 using Distributions
 const Dists = Distributions
 using LinearAlgebra
-using ChainRulesCore
 using Random
 using ReactantCore: @trace
 using SparseArrays
@@ -21,7 +19,7 @@ const SA = StaticArraysCore
 
 using Distributions: log2π
 
-export logdensityof, unnormed_logpdf
+export logdensityof, unnormed_logpdf, CholeskyFactor
 
 # Write your package code here.
 
@@ -59,12 +57,24 @@ Compute the log-normalizatoin constant of the distribution `d`.
 """
 lognorm(d::AbstractVLBIDistributions)  = d.lognorm
 
-# For AbstractVLBI distributions we do a quick adjustment given how we
-# have structured the problem.
-function Dists.logpdf(d::AbstractVLBIDistributions, x::AbstractVector)
-    !Dists.insupport(d, x) && return -Inf
-    return unnormed_logpdf(d, x) + lognorm(d)
+# Whether `x` is in the support of `d`; every value is, except where a likelihood says otherwise.
+_insupport(d::AbstractVLBIDistributions, x) = true
+
+function _logdensity(d::AbstractVLBIDistributions, x)
+    @trace if _insupport(d, x)
+        l = unnormed_logpdf(d, x) + lognorm(d)
+    else
+        l = oftype(lognorm(d), -Inf)
+    end
+    return l
 end
+DensityInterface.logdensityof(d::AbstractVLBIDistributions, x::AbstractArray) = _logdensity(d, x)
+# A matrix is one draw of a likelihood over two dims, not a set of draws.
+DensityInterface.logdensityof(d::AbstractVLBIDistributions, x::AbstractMatrix) = _logdensity(d, x)
+Dists.logpdf(d::AbstractVLBIDistributions, x::AbstractVector) = _logdensity(d, x)
+
+# One draw has the shape of the mean, whatever its dims.
+Dists.rand(rng::Random.AbstractRNG, d::AbstractVLBIDistributions) = Dists._rand!(rng, d, similar(d.μ))
 
 include("cholesky.jl")
 include("utility.jl")

@@ -1,53 +1,48 @@
 export ComplexVisLikelihood
 
 """
-    ComplexVisLikelihood(μ::AbstractVector{<:Complex}, Σ::AbstractVector{<:Real})
+    ComplexVisLikelihood(μ::AbstractArray{<:Complex}, w::AbstractArray{<:Real})
 
-Creates the complex visibility likelihood distribution which is a diagonal complex Gaussian
-with strictly real covariance matrix.
+The likelihood of complex visibilities: independent Gaussians with mean `μ` and weight
+`w = 1/σ²`, where `σ` is the noise of the real and of the imaginary part. `μ` and `w` are
+arrays of any shape with the same axes. A value with weight `0` is unmeasured and adds
+nothing; its data must still be finite.
 
-## Paramters
-- `μ`: The mean complex visibility, which is usually computed from some VLBI model
-- `Σ`: The measurement covariance matrix, which is usually computed directly from the data.
-       Note that `Σ` must be a real element vector and is interpreted at the diagonal of the
-       covariance matrix.
+## Parameters
+- `μ`: the mean visibilities, usually from a model.
+- `w`: the weights, from the data.
 """
-struct ComplexVisLikelihood{V1,V2,W} <: AbstractVLBIDistributions
+struct ComplexVisLikelihood{V1, V2, W} <: AbstractVLBIDistributions
     μ::V1
-    Σ::V2
+    w::V2
     lognorm::W
 end
 
 Base.length(d::ComplexVisLikelihood) = length(d.μ)
+Base.size(d::ComplexVisLikelihood) = size(d.μ)
 Base.eltype(d::ComplexVisLikelihood) = eltype(d.μ)
 Dists.insupport(d::ComplexVisLikelihood, x) = true
 Dists.mean(d::ComplexVisLikelihood) = d.μ
-Dists.var(d::ComplexVisLikelihood) = d.Σ
-Dists.cov(d::ComplexVisLikelihood) = Diagonal(Dists.var(d))
+"""
+    var(d::ComplexVisLikelihood)
 
+`E|x - μ|² = 2/w`, the variance of each complex value; `Inf` where nothing was measured.
+"""
+Dists.var(d::ComplexVisLikelihood) = 2 .* inv.(d.w)
 
-function ComplexVisLikelihood(μ::AbstractVector, Σ::AbstractVector)
-    lognorm = _cvisnorm(μ, Σ)
-    return ComplexVisLikelihood(μ, Σ, lognorm)
+function ComplexVisLikelihood(μ::AbstractArray, w::AbstractArray)
+    _checkweights(μ, w)
+    return ComplexVisLikelihood(μ, w, _cvisnorm(w))
 end
 
-function _cvisnorm(μ, Σ)
-    @assert length(μ) == length(Σ) "Mean and std. dev. vector are not the same length"
-    # 2x the amplitude version because of real and imag components
-    return 2*_gaussnorm(μ, Σ)
-end
+# Two real Gaussian components per value.
+_cvisnorm(w) = 2 * _lognormweights(w)
 
-
-function unnormed_logpdf(d::ComplexVisLikelihood, x::AbstractVector)
-    return _unnormed_logpdf_μΣ(d.μ, d.Σ, x)
-end
+unnormed_logpdf(d::ComplexVisLikelihood, x::AbstractArray) = -_weightedchi2(d.μ, d.w, x)
 
 function Dists._rand!(rng::Random.AbstractRNG, d::ComplexVisLikelihood, x::AbstractArray)
-    x .= randn!(rng, x).*sqrt.(d.Σ)
-    x .+= d.μ
+    σ = _stddev(d.w)
+    T = real(eltype(x))
+    x .= d.μ .+ complex.(randn(rng, T, size(x)), randn(rng, T, size(x))) .* σ
     return x
 end
-
-# function Dists.rand!(rng::Random.AbstractRNG, d::ComplexVisLikelihood, x::AbstractVector, dims::Dims)
-#     x .= randn(rng, eltype(d)).*sqrt.(d.Σ) .+ d.μ
-# end

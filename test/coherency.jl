@@ -1,85 +1,51 @@
 @testset "Coherency Likelihood" begin
-    m = central_fdm(5,1)
+    rng = Random.Xoshiro(2)
+    n = 10
+    comps(f) = ntuple(_ -> f(), 4)
+    μc = comps(() -> complex.(rand(rng, n), rand(rng, n)))
+    xc = comps(() -> complex.(rand(rng, n), rand(rng, n)))
+    wc = comps(() -> inv.(rand(rng, n) .+ 3.0))
 
-
-    μRR = rand(ComplexF64, 10)
-    μRL = rand(ComplexF64, 10)
-    μLR = rand(ComplexF64, 10)
-    μLL = rand(ComplexF64, 10)
-
-    xRR = rand(ComplexF64, 10)
-    xRL = rand(ComplexF64, 10)
-    xLR = rand(ComplexF64, 10)
-    xLL = rand(ComplexF64, 10)
-
-    ΣRR = rand(Float64, 10) .+ 3.0
-    ΣRL = rand(Float64, 10) .+ 3.0
-    ΣLR = rand(Float64, 10) .+ 3.0
-    ΣLL = rand(Float64, 10) .+ 3.0
-
-    μ = StructVector(SMatrix{2,2}.(μRR, μLR, μRL, μLL))
-    g = UnstructuredDomain((U=randn(10), V=randn(10)))
-    μs = UnstructuredMap(μ, g)
-    x = StructVector(SMatrix{2,2}.(xRR, xLR, xRL, xLL))
-    Σ = StructVector(SMatrix{2,2}.(ΣRR, ΣLR, ΣRL, ΣLL))
-    Σs= UnstructuredMap(Σ, g)
-    d = CoherencyLikelihood(μ, Σ)
-    ds1 = CoherencyLikelihood(μs, Σ)
-    d1s = CoherencyLikelihood(μ, Σs)
-    dss = CoherencyLikelihood(μs, Σs)
-    darr = CoherencyLikelihood(Array(μ), Array(Σ))
-
-    @test typeof(ds1.μ) == typeof(d.μ)
-    @test typeof(d1s.μ) == typeof(d.μ)
-    @test typeof(dss.μ) == typeof(d.μ)
-    @test typeof(ds1.Σ) == typeof(d.Σ)
-    @test typeof(d1s.Σ) == typeof(d.Σ)
-    @test typeof(dss.Σ) == typeof(d.Σ)
+    μ = StructVector(SMatrix{2, 2}.(μc...))
+    x = StructVector(SMatrix{2, 2}.(xc...))
+    w = StructVector(SMatrix{2, 2}.(wc...))
+    d = CoherencyLikelihood(μ, w)
 
     @test eltype(d) == eltype(μ)
     @test length(d) == length(μ)
 
-    @test d.lognorm ≈ darr.lognorm
-    @test logdensityof(d, x) ≈ logdensityof(darr, Array(x))
+    expected = sum(1:4) do k
+        logpdf(MvNormal(real.(μc[k]), Diagonal(inv.(wc[k]))), real.(xc[k])) +
+            logpdf(MvNormal(imag.(μc[k]), Diagonal(inv.(wc[k]))), imag.(xc[k]))
+    end
+    @test logdensityof(d, x) ≈ expected
     @inferred Float64 logdensityof(d, x)
 
-    dRR_r = MvNormal(real.(μRR), Diagonal(ΣRR))
-    dLL_r = MvNormal(real.(μLL), Diagonal(ΣLL))
-    dRL_r = MvNormal(real.(μRL), Diagonal(ΣRL))
-    dLR_r = MvNormal(real.(μLR), Diagonal(ΣLR))
+    @testset "storage layouts" begin
+        darr = CoherencyLikelihood(Array(μ), Array(w))
+        @test darr.lognorm ≈ d.lognorm
+        @test logdensityof(darr, Array(x)) ≈ logdensityof(d, x)
+        dense(c) = reshape(stack(c), n, 2, 2)
+        ddense = CoherencyLikelihood(dense(μc), dense(wc))
+        @test logdensityof(ddense, dense(xc)) ≈ logdensityof(d, x)
+        @test_throws DimensionMismatch CoherencyLikelihood(rand(ComplexF64, n, 3), rand(n, 3))
+    end
 
-    dRR_i = MvNormal(imag.(μRR), Diagonal(ΣRR))
-    dLL_i = MvNormal(imag.(μLL), Diagonal(ΣLL))
-    dRL_i = MvNormal(imag.(μRL), Diagonal(ΣRL))
-    dLR_i = MvNormal(imag.(μLR), Diagonal(ΣLR))
+    @testset "missing hands" begin
+        w0 = StructVector(SMatrix{2, 2}.(wc[1], zero(wc[2]), wc[3], wc[4]))
+        x0 = StructVector(SMatrix{2, 2}.(xc[1], zero(xc[2]), xc[3], xc[4]))
+        d0 = CoherencyLikelihood(μ, w0)
+        @test logdensityof(d0, x0) ≈ expected -
+            logpdf(MvNormal(real.(μc[2]), Diagonal(inv.(wc[2]))), real.(xc[2])) -
+            logpdf(MvNormal(imag.(μc[2]), Diagonal(inv.(wc[2]))), imag.(xc[2]))
+    end
 
-    @test logdensityof(d, x) ≈ logpdf(dRR_r, real.(xRR)) + logpdf(dRR_i, imag.(xRR)) +
-                               logpdf(dLL_r, real.(xLL)) + logpdf(dLL_i, imag.(xLL)) +
-                               logpdf(dRL_r, real.(xRL)) + logpdf(dRL_i, imag.(xRL)) +
-                               logpdf(dLR_r, real.(xLR)) + logpdf(dLR_i, imag.(xLR))
-
-
-    test_rrule(Zygote.ZygoteRuleConfig(), unnormed_logpdf, d, x)
-    test_rrule(VLBILikelihoods._coherencynorm, μ, Σ)
-    ll(d, x) = unnormed_logpdf(d, x)
-    ll(μ, Σ, x) = unnormed_logpdf(CoherencyLikelihood(μ, Σ), x)
-
-    rand(d)
-    rand(d, 1)
-    @test size(rand(d, 2,3)) == (length(d.μ), 2,3)
-
-    s = rand(d, 1_000_000)
-    m = mean(s, dims=2)
-    v1 = var(s.:1, dims=2)
-    v2 = var(s.:2, dims=2)
-    v3 = var(s.:3, dims=2)
-    v4 = var(s.:4, dims=2)
-    Σmax = mapreduce(maximum, max, d.Σ)
-    @test isapprox(m, d.μ, atol = 5e-2)
-    @test isapprox(v1, d.Σ.:1, atol = 5e-2)
-    @test isapprox(v2, d.Σ.:2, atol = 5e-2)
-    @test isapprox(v3, d.Σ.:3, atol = 5e-2)
-    @test isapprox(v4, d.Σ.:4, atol = 5e-2)
-
-    @inferred ll(d, x)
+    @testset "sampling" begin
+        s = [rand(rng, d) for _ in 1:50_000]
+        for k in 1:4
+            sk = stack(StructArrays.component(si, k) for si in s)
+            @test within(vec(mean(sk; dims = 2)), μc[k], sqrt.(2 ./ wc[k]), size(sk, 2))
+            @test vec(var(real.(sk); dims = 2)) ≈ inv.(wc[k]) rtol = 3.0e-2
+        end
+    end
 end

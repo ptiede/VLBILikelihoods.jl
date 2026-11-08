@@ -1,88 +1,45 @@
 using VLBILikelihoods
 using Test
-using ChainRulesTestUtils
-using ChainRulesCore
 using Distributions
 using StaticArrays
-using Zygote
 using LinearAlgebra
 using FiniteDifferences
 using StructArrays
 using SparseArrays
 using Serialization
-using ComradeBase
+using Enzyme
+using Random
 
-function moment_test(d, nsamples=200_000, atol=5e-2)
-    # c = cov(d)
-    s = reduce(hcat, reshape.(rand(d, nsamples), :))
-    cs = cov(s; dims=2)
-    ms = reshape(mean(s; dims=2), size(d))
-    # @test isapprox(c, cs; atol)
-    @test isapprox(mean(d), ms; atol)
-
+# Enzyme's gradient of the real function `f` at `x` against central finite differences.
+function check_gradient(f, x; rtol = 1.0e-6)
+    # Runtime activity as in Comrade: the likelihood holds active means next to constant weights.
+    ge = Enzyme.gradient(Enzyme.set_runtime_activity(Enzyme.Reverse), Enzyme.Const(f), x)[1]
+    gf = FiniteDifferences.grad(central_fdm(5, 1), f, x)[1]
+    @test ge ≈ gf rtol = rtol
 end
 
-function lklhd_moment_test(d, ns=1_000_000, atol=5e-2)
-    # c = cov(d)
-    s = rand(d, ns)
-    cs = vec(var(s; dims=2))
-    ms = reshape(mean(s; dims=2), :)
-    @test isapprox(var(d), cs; rtol=atol*2)
-    @test isapprox(mean(d), ms; atol)
+# Each mean within `k` standard errors of `μ`.
+within(m, μ, σ, n; k = 5) = all(abs.(m .- μ) .<= k .* σ ./ sqrt(n))
 
-end
-
+randpd(n) = (m = sprand(n, n, 0.05); 0.5 .* (m + m') + 5 .* Diagonal(ones(n)))
 
 @testset "VLBILikelihoods.jl" begin
-
-    @testset "utility test" begin
-
-        @testset "diagonal normal stuff" begin
-            μ = rand(50)
-            Σ = rand(50)
-            x = rand(50)
-            test_rrule(VLBILikelihoods._unnormed_logpdf_μΣ, μ, Σ, x)
-            @inferred Zygote.gradient(VLBILikelihoods._unnormed_logpdf_μΣ, μ, Σ, x)
-        end
-
-        @testset "dense normal stuff" begin
-            μ = rand(50)
-            m = rand(50,50)
-            Σ = 0.5.*(m .+ m') .+ 5 .* Diagonal(ones(50))
-            d = AmplitudeLikelihood(μ, Σ)
-            @inferred VLBILikelihoods._gaussnorm(μ, d.Σ)
-            @inferred VLBILikelihoods._chi2(μ, Σ)
-        end
-
-        @testset "diagonal complex normal stuff" begin
-            # Now for complex numbers
-            μc = rand(ComplexF64, 50)
-            xc = rand(ComplexF64, 50)
-            Σ = rand(50)
-            test_rrule(VLBILikelihoods._unnormed_logpdf_μΣ, μc, Σ, xc)
-            @inferred Zygote.gradient(VLBILikelihoods._unnormed_logpdf_μΣ, μc, Σ, xc)
-        end
-
-
-
-    end
-
     @testset "CholeskyFactor" begin
-        m = sprand(50, 50, 0.01)
-        Σ = 0.5.*(m .+ m') + 5 .* Diagonal(ones(50))
-        c = VLBILikelihoods.CholeskyFactor(Σ)
+        Σ = randpd(50)
+        c = CholeskyFactor(Σ)
         @test parent(c) === Σ
         @test size(Σ) == size(c)
         @test getindex(Σ, 1, 1) == getindex(c, 1, 1)
         @test cholesky(c) === c
-        @test adjoint(c) isa VLBILikelihoods.CholeskyFactor
+        @test adjoint(c) isa CholeskyFactor
 
-        serialize("test.jls", c)
-        c2 = deserialize("test.jls")
-        rm("test.jls")
+        path = tempname()
+        serialize(path, c)
+        c2 = deserialize(path)
+        rm(path)
         x = rand(size(c2, 1))
         @test c2.cov == c.cov
-        @test c2\x == c\x
+        @test c2 \ x == c \ x
     end
 
     include(joinpath(@__DIR__, "amplitude.jl"))
@@ -90,8 +47,4 @@ end
     include(joinpath(@__DIR__, "complex_vis.jl"))
     include(joinpath(@__DIR__, "coherency.jl"))
     include(joinpath(@__DIR__, "rules.jl"))
-
-
-
-
 end

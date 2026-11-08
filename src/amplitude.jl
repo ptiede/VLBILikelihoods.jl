@@ -1,166 +1,120 @@
 export AmplitudeLikelihood, RiceAmplitudeLikelihood
 
-struct AmplitudeLikelihood{V1,V2<:Union{AbstractVector, CholeskyFactor},W} <: AbstractVLBIDistributions
+"""
+    AmplitudeLikelihood(μ, w::AbstractArray)
+    AmplitudeLikelihood(μ, Σ::CholeskyFactor)
+
+The Gaussian likelihood of amplitudes with mean `μ`: independent, with weights `w = 1/σ²` of the
+axes of `μ` (a value with weight `0` adds nothing), or correlated, with the covariance
+`Σ` given as a [`CholeskyFactor`](@ref).
+
+!!! warning
+    The amplitudes are not debiased. This likelihood is significantly biased from the Rice
+    distribution for SNR `μ/σ < 2`; use [`RiceAmplitudeLikelihood`](@ref) there.
+"""
+struct AmplitudeLikelihood{V1, V2, W} <: AbstractVLBIDistributions
     μ::V1
-    Σ::V2
+    w::V2
     lognorm::W
 end
 
 Base.length(d::AmplitudeLikelihood) = length(d.μ)
-Base.eltype(d::AmplitudeLikelihood) = promote_type(eltype(d.μ), eltype(d.Σ))
+Base.size(d::AmplitudeLikelihood) = size(d.μ)
+Base.eltype(d::AmplitudeLikelihood) = promote_type(eltype(d.μ), eltype(d.w))
 Dists.insupport(::AmplitudeLikelihood, x) = true
+Dists.mean(d::AmplitudeLikelihood) = d.μ
 
-"""
-    AmplitudeLikelihood(μ, Σ::Union{AbstractVector, AbstractMatrix})
-
-Forms the likelihood for amplitudes from the mean vector `μ` and
-the covariance matrix `Σ`. If Σ is vector or a diagonal
-matrix then we assume that the argument is the diagonal covariance matrix.
-If Σ is a full matrix then we assume that a dense covariance was passed
-
-!!! warning
-    We do no processing to the data, i.e. the mean μ is not-debiased anywhere.
-    This likelihood will be significantly biased from the true Rice distribution
-    for data points with SNR = μ/Σ < 2. For low SNR data use `RiceAmplitudeLikelihood`
-"""
-function AmplitudeLikelihood(μ::AbstractVector, Σ::AbstractVector)
-    lognorm = _gaussnorm(μ, Σ)
-    return AmplitudeLikelihood(μ, Σ, lognorm)
+function AmplitudeLikelihood(μ::AbstractArray, w::AbstractArray)
+    _checkweights(μ, w)
+    return AmplitudeLikelihood(μ, w, _lognormweights(w))
 end
 
-function AmplitudeLikelihood(μ::AbstractVector, Σ::Diagonal)
-    AmplitudeLikelihood(μ, diag(Σ))
-end
+AmplitudeLikelihood(μ::AbstractVector, Σ::CholeskyFactor) = AmplitudeLikelihood(μ, Σ, _gaussnorm(μ, Σ))
 
-
-function AmplitudeLikelihood(μ::AbstractVector, Σ::AbstractMatrix)
-    Σpd = CholeskyFactor(Σ)
-    return AmplitudeLikelihood(μ, Σpd)
-end
-
-
-function AmplitudeLikelihood(μ::AbstractVector, Σ::CholeskyFactor)
-    lognorm = _gaussnorm(μ, Σ)
-    return AmplitudeLikelihood(μ, Σ, lognorm)
-end
-
-
-function unnormed_logpdf(d::AmplitudeLikelihood, x::AbstractVector)
-    return _unnormed_logpdf_μΣ(d.μ, d.Σ, x)
-end
-
-function unnormed_logpdf(d::AmplitudeLikelihood{V,P}, x::AbstractVector) where {V, P<:CholeskyFactor}
-    return _amp_logpdf_full(d.μ, d.Σ, x)
-end
+unnormed_logpdf(d::AmplitudeLikelihood, x::AbstractArray) = -_weightedchi2(d.μ, d.w, x)
+unnormed_logpdf(d::AmplitudeLikelihood{V, <:CholeskyFactor}, x::AbstractVector) where {V} = _amp_logpdf_full(d.μ, d.w, x)
 
 function _amp_logpdf_full(μ, Σ, x)
-    dθ = x .- μ
-    z = _chi2(dθ, Σ)
-    return -z
+    _checkdata(μ, x)
+    return -_chi2(x .- μ, Σ)
 end
 
-function Distributions._rand!(rng::Random.AbstractRNG, d::AmplitudeLikelihood{<:AbstractVector, <:AbstractVector}, x::AbstractVector)
-    randn!(rng, x)
-    x .= x.*sqrt.(d.Σ) .+ d.μ
+function Distributions._rand!(rng::Random.AbstractRNG, d::AmplitudeLikelihood, x::AbstractArray{<:Real})
+    x .= d.μ .+ randn(rng, eltype(x), size(x)) .* _stddev(d.w)
     return x
 end
 
-function Distributions._rand!(rng::Random.AbstractRNG, d::AmplitudeLikelihood{<:AbstractVector, <:CholeskyFactor}, x::AbstractVector)
+function Distributions._rand!(rng::Random.AbstractRNG, d::AmplitudeLikelihood{<:AbstractVector, <:CholeskyFactor}, x::AbstractVector{<:Real})
     randn!(rng, x)
-    chol = d.Σ
-    r= zero(x)
-    _color!(r, chol, x)
+    r = zero(x)
+    _color!(r, d.w, x)
     x .= d.μ .+ r
     return x
 end
 
-struct RiceAmplitudeLikelihood{V1,V2<:AbstractVector,W} <: AbstractVLBIDistributions
+"""
+    RiceAmplitudeLikelihood(μ, w::AbstractArray)
+
+The Rice likelihood of amplitudes with model amplitudes `μ` and weights `w = 1/σ²` of the axes
+of `μ`, `σ` the noise of each component of the complex visibility. A value with weight `0` is
+unmeasured and adds nothing; its data must be finite and non-negative.
+
+!!! note
+    This is the correct distribution of visibility amplitudes, but it is slower than the
+    Gaussian approximation [`AmplitudeLikelihood`](@ref). Low-SNR data need it to be unbiased.
+"""
+struct RiceAmplitudeLikelihood{V1, V2, W} <: AbstractVLBIDistributions
     μ::V1
-    Σ::V2
+    w::V2
     lognorm::W
 end
 
 Base.length(d::RiceAmplitudeLikelihood) = length(d.μ)
-Base.eltype(d::RiceAmplitudeLikelihood) = promote_type(eltype(d.μ), eltype(d.Σ))
-Dists.insupport(::RiceAmplitudeLikelihood, x) = all(>(0), x)
+Base.size(d::RiceAmplitudeLikelihood) = size(d.μ)
+Base.eltype(d::RiceAmplitudeLikelihood) = promote_type(eltype(d.μ), eltype(d.w))
+Dists.insupport(d::RiceAmplitudeLikelihood, x::AbstractVector) = _insupport(d, x)
+_insupport(::RiceAmplitudeLikelihood, x) = all(>=(0), x)
 
-"""
-    RiceAmplitudeLikelihood(μ, Σ::Union{AbstractVector, Diagonal})
-
-Forms the likelihood for amplitudes from the mean vector `μ` and
-the diagonal covariance matrix `Σ`. `Σ` can either be a Diagonal matrix or
-a vector whose entries are the variance for each data point.
-
-!!! note
-    This is the correct likelihood distribution for visibility amplitudes, but it is slower
-    than the Gaussian approximation `AmplitudeLikelihood`. However for low SNR data it is
-    required to get unbiased results.
-"""
-function RiceAmplitudeLikelihood(μ::AbstractVector, Σ::AbstractVector)
-    lognorm = -sum(log, Σ)
-    return RiceAmplitudeLikelihood(μ, Σ, lognorm)
+function RiceAmplitudeLikelihood(μ::AbstractArray, w::AbstractArray)
+    _checkweights(μ, w)
+    return RiceAmplitudeLikelihood(μ, w, _ricenorm(w))
 end
 
-function RiceAmplitudeLikelihood(μ::AbstractVector, Σ::Diagonal)
-    return RiceAmplitudeLikelihood(μ, diag(Σ))
-end
-
-_L12(x) = exp(x/2)*((1-x)*besseli0(-x/2) - x*besseli1(-x/2))
-
-function unnormed_logpdf(d::RiceAmplitudeLikelihood, x::AbstractVector)
-    return sum(zip(d.μ, d.Σ, x)) do (μ, Σ, xx)
-        # we use besseli0x for numerical stability for high SNR points
-        return lpdf_rice(xx, μ, Σ)
+# `Σ_{w > 0} log w`
+function _ricenorm(w)
+    T = float(real(eltype(w)))
+    return sum(w; init = zero(T)) do wi
+        measured = wi > 0
+        return ifelse(measured, log(ifelse(measured, wi, one(wi))), zero(T))
     end
 end
 
-lpdf_rice(x, μ, Σ) = -(x^2 + μ^2)*inv(2*Σ) + log(x*besseli0x(x*μ/Σ)) + x*μ/Σ
+_L12(x) = exp(x / 2) * ((1 - x) * besseli0(-x / 2) - x * besseli1(-x / 2))
 
-function ChainRulesCore.rrule(::typeof(unnormed_logpdf), d::RiceAmplitudeLikelihood, x::AbstractVector)
-    (;μ, Σ) = d
-    dx = zero(x)
-    dμ = zero(μ)
-    dΣ = zero(Σ)
-    out = zero(eltype(x))
-    for i in eachindex(x, μ, Σ)
-        z = x[i]*μ[i]/Σ[i]
-        κ = inv(Σ[i])
-        i0 = besseli0x(z)
-        i1 = besseli1x(z)
-        di = (i1/i0 - 1)
-        dΣ[i] = (x[i]^2 + μ[i]^2)κ^2/2 - (di + 1)*z*κ
-        dx[i] = -x[i]*κ + inv(x[i]) + (di + 1)*μ[i]*κ
-        dμ[i] = -μ[i]*κ  + (di + 1)*x[i]*κ
-        out += lpdf_rice(x[i], μ[i], Σ[i])
+function unnormed_logpdf(d::RiceAmplitudeLikelihood, x::AbstractArray)
+    _checkdata(d.μ, x)
+    return sum(zip(d.μ, d.w, x); init = zero(float(real(eltype(d.w))))) do (μ, w, xx)
+        measured = w > 0
+        # an unmeasured value is evaluated at x = 1 and dropped, so no log(0) reaches the gradient
+        l = lpdf_rice(ifelse(measured, xx, one(xx)), μ, w)
+        return ifelse(measured, l, zero(l))
     end
-    function _rice_pullback(Δ)
-        return NoTangent(), Tangent{typeof(d)}(;μ=Δ*dμ, Σ=Δ*dΣ), Δ*dx
-    end
-    return out, _rice_pullback
 end
 
-function ChainRulesCore.rrule(::Type{<:RiceAmplitudeLikelihood}, μ::AbstractVector, Σ::AbstractVector)
-    d = RiceAmplitudeLikelihood(μ, Σ)
-    function _riceamplitude_pullback(Δ)
-        dd = unthunk(Δ)
-        Δμ = dd.μ
-        ΔΣ = dd.Σ - inv.(Σ)*dd.lognorm
-        return NoTangent(), Δμ, ΔΣ
-    end
-    return d, _riceamplitude_pullback
-end
+# besseli0x keeps high-SNR points finite.
+lpdf_rice(x, μ, w) = -(x^2 + μ^2) * w / 2 + log(x * besseli0x(x * μ * w)) + x * μ * w
 
-Dists.mean(d::RiceAmplitudeLikelihood) = sqrt.(d.Σ .* π/2).*_L12.(-d.μ.^2 .* inv.(2 .* d.Σ))
+Dists.mean(d::RiceAmplitudeLikelihood) = sqrt.(inv.(d.w) .* π / 2) .* _L12.(-d.μ .^ 2 .* d.w ./ 2)
 function Dists.var(d::RiceAmplitudeLikelihood)
     T = eltype(d)
-    return 2*d.Σ .+ d.μ.^2 - (T(π).*d.Σ/2).*_L12.(-d.μ.^2 .* inv.(2*d.Σ)).^2
+    Σ = inv.(d.w)
+    return 2 * Σ .+ d.μ .^ 2 - (T(π) .* Σ / 2) .* _L12.(-d.μ .^ 2 .* d.w ./ 2) .^ 2
 end
-Dists.cov(d::RiceAmplitudeLikelihood) = Diagonal(Dists.var(d))
+Dists.cov(d::RiceAmplitudeLikelihood) = Diagonal(vec(Dists.var(d)))
 
-
-function Distributions._rand!(rng::Random.AbstractRNG, d::RiceAmplitudeLikelihood{<:AbstractVector, <:AbstractVector}, x::AbstractVector)
-    randn!(rng, x)
-    # sample from a normal gaussian and abs.
-    x .= abs.(complex.(x.*sqrt.(d.Σ) .+ d.μ, randn.(rng).*sqrt.(d.Σ)))
+function Distributions._rand!(rng::Random.AbstractRNG, d::RiceAmplitudeLikelihood, x::AbstractArray{<:Real})
+    σ = _stddev(d.w)
+    T = eltype(x)
+    x .= abs.(complex.(randn(rng, T, size(x)) .* σ .+ d.μ, randn(rng, T, size(x)) .* σ))
     return x
 end
